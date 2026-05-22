@@ -1,0 +1,13 @@
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  roots: ['<rootDir>/tests'],
+  testMatch: ['**/*.test.ts'],
+  transform: { '^.+\\.tsx?$': 'ts-jest' },
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  collectCoverageFrom: ['src/**/*.ts', '!src/app.ts'],
+  coverageDirectory: 'coverage',
+  setupFilesAfterFramework: [],
+  globalSetup: './tests/setup.ts',
+  globalTeardown: './tests/teardown.ts',
+};

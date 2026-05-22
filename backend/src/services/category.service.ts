@@ -1,6 +1,5 @@
 import prisma from '../utils/prisma';
 import { NotFoundError, ForbiddenError, ConflictError } from '../utils/errors';
-import { CategoryType } from '@prisma/client';
 
 export const categoryService = {
   async findAll(userId: string) {
@@ -10,7 +9,7 @@ export const categoryService = {
     });
   },
 
-  async create(userId: string, data: { name: string; color: string; icon: string; type: CategoryType }) {
+  async create(userId: string, data: { name: string; color: string; icon: string; type: string }) {
     const exists = await prisma.category.findFirst({
       where: { name: data.name, userId },
     });

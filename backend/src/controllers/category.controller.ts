@@ -3,7 +3,6 @@ import { body } from 'express-validator';
 import { categoryService } from '../services/category.service';
 import { AuthRequest } from '../types';
 import { validate } from '../middlewares/validate.middleware';
-import { CategoryType } from '@prisma/client';
 
 export const categoryValidators = {
   create: [
@@ -31,10 +30,7 @@ export const categoryController = {
 
   create: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const cat = await categoryService.create(req.userId!, {
-        ...req.body,
-        type: req.body.type as CategoryType,
-      });
+      const cat = await categoryService.create(req.userId!, req.body);
       res.status(201).json({ success: true, data: cat });
     } catch (e) { next(e); }
   },

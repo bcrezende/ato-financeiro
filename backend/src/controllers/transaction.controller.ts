@@ -13,6 +13,7 @@ export const transactionValidators = {
     body('date').isISO8601().withMessage('Valid date required'),
     body('categoryId').isUUID().withMessage('Valid categoryId required'),
     body('frequency').optional().isIn(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
+    body('installments').optional().isInt({ min: 2, max: 360 }).withMessage('Parcelas deve ser entre 2 e 360'),
     validate,
   ],
   update: [

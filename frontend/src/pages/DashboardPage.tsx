@@ -3,6 +3,7 @@ import { Plus, TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRigh
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge, TransactionBadge } from '@/components/ui/Badge';
+import { CategoryAvatar } from '@/utils/icons';
 import { PageLoader } from '@/components/ui/Spinner';
 import { TransactionModal } from '@/components/modals/TransactionModal';
 import { EvolutionChart } from '@/components/charts/EvolutionChart';
@@ -115,12 +116,11 @@ export const DashboardPage = () => {
             {transactions.data.map((t) => (
               <div key={t.id} className="flex items-center justify-between px-6 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                    style={{ backgroundColor: t.category?.color ?? '#6366f1' }}
-                  >
-                    {t.category?.name?.charAt(0) ?? '?'}
-                  </div>
+                  <CategoryAvatar
+                    icon={t.category?.icon ?? 'tag'}
+                    color={t.category?.color ?? '#6366f1'}
+                    name={t.category?.name}
+                  />
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{t.description}</p>
                     <div className="flex items-center gap-2 mt-0.5">

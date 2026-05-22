@@ -33,6 +33,9 @@ export interface Transaction {
   notes?: string;
   isRecurring: boolean;
   frequency?: RecurrenceFreq;
+  installments?: number;
+  installmentNumber?: number;
+  recurringId?: string;
   createdAt: string;
 }
 

@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, ArrowLeftRight, PieChart, Target,
-  Tag, Settings, X, TrendingUp,
+  Tag, Settings, X, TrendingUp, Sparkles,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -15,6 +15,7 @@ const nav = [
   { to: '/reports', icon: PieChart, label: 'Relatórios' },
   { to: '/budgets', icon: Target, label: 'Orçamentos' },
   { to: '/categories', icon: Tag, label: 'Categorias' },
+  { to: '/dream-board', icon: Sparkles, label: 'Quadro dos Sonhos' },
   { to: '/settings', icon: Settings, label: 'Configurações' },
 ];
 

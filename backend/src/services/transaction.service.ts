@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import prisma from '../utils/prisma';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
 import { TransactionFilters } from '../types';
@@ -16,18 +15,51 @@ export const transactionService = {
     notes?: string;
     isRecurring?: boolean;
     frequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+    installments?: number;
   }) {
     const category = await prisma.category.findFirst({
       where: { id: data.categoryId, OR: [{ userId }, { isDefault: true }] },
     });
     if (!category) throw new NotFoundError('Category');
 
+    const { installments, ...baseData } = data;
+    const useInstallments = installments && installments > 1 && data.isRecurring && data.frequency;
+
+    if (useInstallments) {
+      const recurringId = crypto.randomUUID();
+      const count = installments!;
+
+      const created = await prisma.$transaction(async (tx) => {
+        const results = [];
+        for (let i = 0; i < count; i++) {
+          const date = advanceDate(baseData.date, baseData.frequency!, i);
+          const t = await tx.transaction.create({
+            data: { ...baseData, userId, date, recurringId, installments: count, installmentNumber: i + 1 },
+            include: { category: { select: { id: true, name: true, color: true, icon: true } } },
+          });
+          results.push(t);
+        }
+        return results;
+      });
+
+      if (data.type === 'EXPENSE') {
+        for (const t of created) {
+          const d = new Date(t.date);
+          await prisma.budget.updateMany({
+            where: { userId, categoryId: data.categoryId, month: d.getMonth() + 1, year: d.getFullYear() },
+            data: { spent: { increment: data.amount } },
+          });
+        }
+      }
+
+      return created[0];
+    }
+
     const transaction = await prisma.transaction.create({
-      data: { ...data, userId, amount: new Prisma.Decimal(data.amount) },
+      data: { ...baseData, userId },
       include: { category: { select: { id: true, name: true, color: true, icon: true } } },
     });
 
-    // Update budget spent if expense
     if (data.type === 'EXPENSE') {
       const d = new Date(data.date);
       await prisma.budget.updateMany({
@@ -40,19 +72,20 @@ export const transactionService = {
   },
 
   async findAll(userId: string, filters: TransactionFilters, page = DEFAULT_PAGE, limit = DEFAULT_LIMIT) {
-    const where: Prisma.TransactionWhereInput = { userId };
+    const where: any = { userId };
 
-    if (filters.startDate) where.date = { ...((where.date as any) || {}), gte: new Date(filters.startDate) };
-    if (filters.endDate) where.date = { ...((where.date as any) || {}), lte: new Date(filters.endDate) };
+    if (filters.startDate) where.date = { ...((where.date) || {}), gte: new Date(filters.startDate) };
+    if (filters.endDate) where.date = { ...((where.date) || {}), lte: new Date(filters.endDate) };
     if (filters.categoryId) where.categoryId = filters.categoryId;
     if (filters.type) where.type = filters.type;
     if (filters.minAmount || filters.maxAmount) {
       where.amount = {};
-      if (filters.minAmount) (where.amount as any).gte = new Prisma.Decimal(filters.minAmount);
-      if (filters.maxAmount) (where.amount as any).lte = new Prisma.Decimal(filters.maxAmount);
+      if (filters.minAmount) where.amount.gte = parseFloat(filters.minAmount);
+      if (filters.maxAmount) where.amount.lte = parseFloat(filters.maxAmount);
     }
     if (filters.search) {
-      where.description = { contains: filters.search, mode: 'insensitive' };
+      // SQLite: busca case-sensitive por padrão
+      where.description = { contains: filters.search };
     }
 
     const [total, transactions] = await Promise.all([
@@ -82,34 +115,31 @@ export const transactionService = {
     return t;
   },
 
-  async update(userId: string, id: string, data: Partial<{
-    description: string; amount: number; type: 'INCOME' | 'EXPENSE';
-    date: Date; categoryId: string; notes: string; isRecurring: boolean;
-    frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
-  }>) {
+  async update(userId: string, id: string, data: Record<string, any>) {
     const existing = await this.findById(userId, id);
 
-    // Reverse old budget impact
     if (existing.type === 'EXPENSE') {
       const d = new Date(existing.date);
       await prisma.budget.updateMany({
         where: { userId, categoryId: existing.categoryId, month: d.getMonth() + 1, year: d.getFullYear() },
-        data: { spent: { decrement: Number(existing.amount) } },
+        data: { spent: { decrement: existing.amount } },
       });
     }
 
-    const updateData: Prisma.TransactionUpdateInput = { ...data };
-    if (data.amount !== undefined) updateData.amount = new Prisma.Decimal(data.amount);
+    const safeData: Record<string, any> = {};
+    const allowed = ['description', 'amount', 'type', 'date', 'categoryId', 'notes', 'isRecurring', 'frequency', 'installments'];
+    for (const key of allowed) {
+      if (data[key] !== undefined) safeData[key] = data[key] ?? null;
+    }
 
     const updated = await prisma.transaction.update({
       where: { id },
-      data: updateData,
+      data: safeData,
       include: { category: { select: { id: true, name: true, color: true, icon: true } } },
     });
 
-    // Apply new budget impact
     const newType = data.type ?? existing.type;
-    const newAmount = data.amount ?? Number(existing.amount);
+    const newAmount = data.amount ?? existing.amount;
     const newCategoryId = data.categoryId ?? existing.categoryId;
     const newDate = data.date ?? existing.date;
 
@@ -131,7 +161,7 @@ export const transactionService = {
       const d = new Date(t.date);
       await prisma.budget.updateMany({
         where: { userId, categoryId: t.categoryId, month: d.getMonth() + 1, year: d.getFullYear() },
-        data: { spent: { decrement: Number(t.amount) } },
+        data: { spent: { decrement: t.amount } },
       });
     }
 
@@ -153,8 +183,8 @@ export const transactionService = {
       }),
     ]);
 
-    const income = Number(incomeAgg._sum.amount ?? 0);
-    const expense = Number(expenseAgg._sum.amount ?? 0);
+    const income = incomeAgg._sum.amount ?? 0;
+    const expense = expenseAgg._sum.amount ?? 0;
     return { income, expense, balance: income - expense };
   },
 
@@ -173,7 +203,7 @@ export const transactionService = {
     return results.map((r) => ({
       ...r,
       category: categories.find((c) => c.id === r.categoryId),
-      total: Number(r._sum.amount ?? 0),
+      total: r._sum.amount ?? 0,
     }));
   },
 
@@ -190,3 +220,14 @@ export const transactionService = {
     return results;
   },
 };
+
+function advanceDate(date: Date, frequency: string, count: number): Date {
+  const d = new Date(date);
+  switch (frequency) {
+    case 'DAILY':   d.setDate(d.getDate() + count); break;
+    case 'WEEKLY':  d.setDate(d.getDate() + count * 7); break;
+    case 'MONTHLY': d.setMonth(d.getMonth() + count); break;
+    case 'YEARLY':  d.setFullYear(d.getFullYear() + count); break;
+  }
+  return d;
+}

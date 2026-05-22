@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Plus } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
+import { CategoryModal } from '@/components/modals/CategoryModal';
 import { useCategories } from '@/hooks/useCategories';
 import { useCreateTransaction, useUpdateTransaction } from '@/hooks/useTransactions';
 import { Transaction } from '@/types';
@@ -24,6 +26,7 @@ interface FormValues {
   notes: string;
   isRecurring: boolean;
   frequency: string;
+  installments: string;
 }
 
 export const TransactionModal = ({ open, onClose, transaction }: TransactionModalProps) => {
@@ -32,11 +35,15 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
   const updateMutation = useUpdateTransaction();
   const isEditing = !!transaction;
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<FormValues>({
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const prevCategoryIdsRef = useRef<Set<string>>(new Set());
+  const [awaitingNewCategory, setAwaitingNewCategory] = useState(false);
+
+  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<FormValues>({
     defaultValues: {
       description: '', amount: '', type: 'EXPENSE',
       date: format(new Date(), 'yyyy-MM-dd'), categoryId: '',
-      notes: '', isRecurring: false, frequency: '',
+      notes: '', isRecurring: false, frequency: '', installments: '',
     },
   });
 
@@ -54,13 +61,29 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
         notes: transaction.notes ?? '',
         isRecurring: transaction.isRecurring,
         frequency: transaction.frequency ?? '',
+        installments: transaction.installments ? String(transaction.installments) : '',
       });
     } else {
-      reset({ description: '', amount: '', type: 'EXPENSE', date: format(new Date(), 'yyyy-MM-dd'), categoryId: '', notes: '', isRecurring: false, frequency: '' });
+      reset({ description: '', amount: '', type: 'EXPENSE', date: format(new Date(), 'yyyy-MM-dd'), categoryId: '', notes: '', isRecurring: false, frequency: '', installments: '' });
     }
   }, [transaction, reset, open]);
 
   const filteredCategories = categories.filter((c) => c.type === watchType);
+
+  const handleOpenCategoryModal = () => {
+    prevCategoryIdsRef.current = new Set(filteredCategories.map((c) => c.id));
+    setAwaitingNewCategory(true);
+    setCategoryModalOpen(true);
+  };
+
+  useEffect(() => {
+    if (!awaitingNewCategory || categoryModalOpen) return;
+    const newCat = filteredCategories.find((c) => !prevCategoryIdsRef.current.has(c.id));
+    if (newCat) {
+      setValue('categoryId', newCat.id);
+      setAwaitingNewCategory(false);
+    }
+  }, [categories, awaitingNewCategory, categoryModalOpen, filteredCategories, setValue]);
 
   const onSubmit = async (data: FormValues) => {
     const payload = {
@@ -72,6 +95,7 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
       notes: data.notes || undefined,
       isRecurring: data.isRecurring,
       frequency: data.isRecurring && data.frequency ? (data.frequency as any) : undefined,
+      installments: data.isRecurring && data.installments ? parseInt(data.installments) : (isEditing ? null : undefined),
     };
 
     if (isEditing) {
@@ -85,6 +109,7 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
   const isLoading = createMutation.isPending || updateMutation.isPending;
 
   return (
+    <>
     <Modal open={open} onClose={onClose} title={isEditing ? 'Editar Transação' : 'Nova Transação'} size="lg">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Type toggle */}
@@ -135,14 +160,26 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
           />
 
           <div className="sm:col-span-2">
-            <Select
-              label="Categoria"
-              required
-              placeholder="Selecione uma categoria"
-              options={filteredCategories.map((c) => ({ value: c.id, label: c.name }))}
-              error={errors.categoryId?.message}
-              {...register('categoryId', { required: 'Categoria obrigatória' })}
-            />
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Select
+                  label="Categoria"
+                  required
+                  placeholder="Selecione uma categoria"
+                  options={filteredCategories.map((c) => ({ value: c.id, label: c.name }))}
+                  error={errors.categoryId?.message}
+                  {...register('categoryId', { required: 'Categoria obrigatória' })}
+                />
+              </div>
+              <button
+                type="button"
+                title="Nova categoria"
+                onClick={handleOpenCategoryModal}
+                className="h-[38px] w-[38px] flex-shrink-0 flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:border-primary-400 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           <div className="sm:col-span-2">
@@ -155,28 +192,43 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
         </div>
 
         {/* Recurring */}
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-          <input
-            type="checkbox"
-            id="isRecurring"
-            className="w-4 h-4 rounded text-primary-600"
-            {...register('isRecurring')}
-          />
-          <label htmlFor="isRecurring" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
-            Transação recorrente
-          </label>
-          {watchRecurring && (
-            <Select
-              options={[
-                { value: 'DAILY', label: 'Diário' },
-                { value: 'WEEKLY', label: 'Semanal' },
-                { value: 'MONTHLY', label: 'Mensal' },
-                { value: 'YEARLY', label: 'Anual' },
-              ]}
-              placeholder="Frequência"
-              className="ml-auto w-36"
-              {...register('frequency')}
+        <div className="rounded-lg bg-gray-50 dark:bg-gray-700/50 overflow-hidden">
+          <div className="flex items-center gap-3 p-3">
+            <input
+              type="checkbox"
+              id="isRecurring"
+              className="w-4 h-4 rounded text-primary-600"
+              {...register('isRecurring')}
             />
+            <label htmlFor="isRecurring" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+              Transação recorrente
+            </label>
+          </div>
+          {watchRecurring && (
+            <div className="px-3 pb-3 flex gap-3 border-t border-gray-200 dark:border-gray-600 pt-3">
+              <Select
+                label="Frequência"
+                options={[
+                  { value: 'DAILY', label: 'Diário' },
+                  { value: 'WEEKLY', label: 'Semanal' },
+                  { value: 'MONTHLY', label: 'Mensal' },
+                  { value: 'YEARLY', label: 'Anual' },
+                ]}
+                placeholder="Selecionar"
+                className="flex-1"
+                {...register('frequency')}
+              />
+              <Input
+                label="Parcelas"
+                type="number"
+                min="2"
+                max="360"
+                placeholder="∞"
+                title="Deixe vazio para repetir indefinidamente"
+                className="w-28"
+                {...register('installments')}
+              />
+            </div>
           )}
         </div>
 
@@ -188,5 +240,11 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
         </div>
       </form>
     </Modal>
+
+    <CategoryModal
+      open={categoryModalOpen}
+      onClose={() => setCategoryModalOpen(false)}
+    />
+    </>
   );
 };

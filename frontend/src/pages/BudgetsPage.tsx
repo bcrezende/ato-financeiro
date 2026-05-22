@@ -8,6 +8,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageLoader } from '@/components/ui/Spinner';
 import { BudgetModal } from '@/components/modals/BudgetModal';
 import { useBudgets, useDeleteBudget } from '@/hooks/useBudgets';
+import { CategoryAvatar } from '@/utils/icons';
 import { Budget } from '@/types';
 import { formatCurrency, formatPercent } from '@/utils/format';
 
@@ -138,9 +139,7 @@ const BudgetCard = ({ budget: b, onEdit, onDelete }: { budget: Budget; onEdit: (
     <Card className="hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: b.category?.color ?? '#6366f1' }}>
-            {b.category?.name?.charAt(0)}
-          </div>
+          <CategoryAvatar icon={b.category?.icon ?? 'tag'} color={b.category?.color ?? '#6366f1'} name={b.category?.name} />
           <div>
             <p className="font-semibold text-sm text-gray-900 dark:text-white">{b.name}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">{b.category?.name}</p>

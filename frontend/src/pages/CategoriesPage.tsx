@@ -8,6 +8,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageLoader } from '@/components/ui/Spinner';
 import { CategoryModal } from '@/components/modals/CategoryModal';
 import { useCategories, useDeleteCategory } from '@/hooks/useCategories';
+import { CategoryAvatar } from '@/utils/icons';
 import { Category } from '@/types';
 
 export const CategoriesPage = () => {
@@ -114,9 +115,7 @@ export const CategoriesPage = () => {
 
 const CategoryItem = ({ category: c, onEdit, onDelete }: { category: Category; onEdit?: () => void; onDelete?: () => void }) => (
   <div className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
-    <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ backgroundColor: c.color }}>
-      {c.name.charAt(0).toUpperCase()}
-    </div>
+    <CategoryAvatar icon={c.icon} color={c.color} name={c.name} />
     <div className="flex-1 min-w-0">
       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.name}</p>
       {c.isDefault && <Badge color="#94a3b8" size="sm">Padrão</Badge>}

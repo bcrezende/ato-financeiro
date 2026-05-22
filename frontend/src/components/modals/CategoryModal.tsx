@@ -6,6 +6,7 @@ import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { useCreateCategory, useUpdateCategory } from '@/hooks/useCategories';
 import { Category } from '@/types';
+import { AVAILABLE_ICONS, CategoryAvatar } from '@/utils/icons';
 
 interface CategoryModalProps {
   open: boolean;
@@ -17,12 +18,6 @@ const PRESET_COLORS = [
   '#6366f1','#8b5cf6','#ec4899','#ef4444','#f97316',
   '#f59e0b','#22c55e','#10b981','#06b6d4','#0ea5e9',
   '#3b82f6','#64748b',
-];
-
-const ICONS = [
-  'tag','home','car','utensils','heart','book','smile',
-  'shopping-bag','file-text','briefcase','laptop','trending-up',
-  'coffee','music','gift','globe','star','zap',
 ];
 
 interface FormValues {
@@ -43,10 +38,11 @@ export const CategoryModal = ({ open, onClose, category }: CategoryModalProps) =
 
   const watchColor = watch('color');
   const watchIcon = watch('icon');
+  const watchName = watch('name');
 
   useEffect(() => {
     if (category) {
-      reset({ name: category.name, color: category.color, icon: category.icon, type: category.type });
+      reset({ name: category.name, color: category.color, icon: category.icon, type: category.type as 'INCOME' | 'EXPENSE' });
     } else {
       reset({ name: '', color: '#6366f1', icon: 'tag', type: 'EXPENSE' });
     }
@@ -105,19 +101,23 @@ export const CategoryModal = ({ open, onClose, category }: CategoryModalProps) =
           </div>
         </div>
 
-        {/* Icon picker */}
+        {/* Icon picker — real Lucide icons */}
         <div>
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Ícone</label>
           <div className="flex flex-wrap gap-2">
-            {ICONS.map((icon) => (
+            {AVAILABLE_ICONS.map(({ value, label, Icon }) => (
               <button
-                key={icon}
+                key={value}
                 type="button"
-                onClick={() => setValue('icon', icon)}
-                className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center text-xs font-mono transition-all hover:scale-105
-                  ${watchIcon === icon ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700' : 'border-gray-200 dark:border-gray-600 text-gray-500'}`}
+                title={label}
+                onClick={() => setValue('icon', value)}
+                className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center transition-all hover:scale-105
+                  ${watchIcon === value
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                    : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400'
+                  }`}
               >
-                {icon.slice(0, 3)}
+                <Icon size={18} />
               </button>
             ))}
           </div>
@@ -125,10 +125,13 @@ export const CategoryModal = ({ open, onClose, category }: CategoryModalProps) =
 
         {/* Preview */}
         <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: watchColor }}>
-            {watchIcon.slice(0, 1).toUpperCase()}
+          <CategoryAvatar icon={watchIcon} color={watchColor} size="md" />
+          <div>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {watchName || 'Nome da categoria'}
+            </p>
+            <p className="text-xs text-gray-400">Preview</p>
           </div>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{watch('name') || 'Preview'}</span>
         </div>
 
         <div className="flex justify-end gap-3 pt-2">

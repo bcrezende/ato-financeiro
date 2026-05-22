@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import prisma from '../utils/prisma';
 import { NotFoundError, ForbiddenError, ConflictError } from '../utils/errors';
 
@@ -16,12 +15,10 @@ export const budgetService = {
 
     return budgets.map((b) => ({
       ...b,
-      amount: Number(b.amount),
-      spent: Number(b.spent),
-      remaining: Math.max(0, Number(b.amount) - Number(b.spent)),
-      percentage: Number(b.amount) > 0 ? Math.min(100, (Number(b.spent) / Number(b.amount)) * 100) : 0,
-      isOverBudget: Number(b.spent) > Number(b.amount),
-      isAlerted: (Number(b.spent) / Number(b.amount)) * 100 >= b.alertAt,
+      remaining: Math.max(0, b.amount - b.spent),
+      percentage: b.amount > 0 ? Math.min(100, (b.spent / b.amount) * 100) : 0,
+      isOverBudget: b.spent > b.amount,
+      isAlerted: b.amount > 0 && (b.spent / b.amount) * 100 >= b.alertAt,
     }));
   },
 
@@ -43,7 +40,6 @@ export const budgetService = {
     });
     if (exists) throw new ConflictError('Budget for this category/month/year already exists');
 
-    // Calculate already-spent in this period
     const startDate = new Date(data.year, data.month - 1, 1);
     const endDate = new Date(data.year, data.month, 0, 23, 59, 59);
     const spent = await prisma.transaction.aggregate({
@@ -52,12 +48,7 @@ export const budgetService = {
     });
 
     return prisma.budget.create({
-      data: {
-        ...data,
-        userId,
-        amount: new Prisma.Decimal(data.amount),
-        spent: new Prisma.Decimal(Number(spent._sum.amount ?? 0)),
-      },
+      data: { ...data, userId, spent: spent._sum.amount ?? 0 },
       include: { category: { select: { id: true, name: true, color: true, icon: true } } },
     });
   },
@@ -67,14 +58,9 @@ export const budgetService = {
     if (!budget) throw new NotFoundError('Budget');
     if (budget.userId !== userId) throw new ForbiddenError();
 
-    const updateData: Prisma.BudgetUpdateInput = {};
-    if (data.name !== undefined) updateData.name = data.name;
-    if (data.amount !== undefined) updateData.amount = new Prisma.Decimal(data.amount);
-    if (data.alertAt !== undefined) updateData.alertAt = data.alertAt;
-
     return prisma.budget.update({
       where: { id },
-      data: updateData,
+      data,
       include: { category: { select: { id: true, name: true, color: true, icon: true } } },
     });
   },

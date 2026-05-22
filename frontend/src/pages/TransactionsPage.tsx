@@ -10,6 +10,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageLoader } from '@/components/ui/Spinner';
 import { TransactionModal } from '@/components/modals/TransactionModal';
 import { useTransactions, useDeleteTransaction, useExportTransactions } from '@/hooks/useTransactions';
+import { CategoryAvatar } from '@/utils/icons';
 import { useCategories } from '@/hooks/useCategories';
 import { Transaction, TransactionFilters } from '@/types';
 import { formatCurrency, formatDate } from '@/utils/format';
@@ -149,9 +150,7 @@ export const TransactionsPage = () => {
               {data.data.map((t) => (
                 <div key={t.id} className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: t.category?.color ?? '#6366f1' }}>
-                      {t.category?.name?.charAt(0)}
-                    </div>
+                    <CategoryAvatar icon={t.category?.icon ?? 'tag'} color={t.category?.color ?? '#6366f1'} name={t.category?.name} />
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{t.description}</p>
                       <p className="text-xs text-gray-500">{formatDate(t.date)} · {t.category?.name}</p>
@@ -192,7 +191,15 @@ export const TransactionsPage = () => {
                       <td className="px-4 py-3">
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">{t.description}</p>
-                          {t.isRecurring && <span className="text-xs text-purple-600 dark:text-purple-400">↻ Recorrente</span>}
+                          {t.isRecurring && (
+                            <span className="text-xs text-purple-600 dark:text-purple-400">
+                              {t.installments && t.installmentNumber
+                                ? `↻ Parcela ${t.installmentNumber}/${t.installments}`
+                                : t.installments
+                                ? `↻ Recorrente (${t.installments}x)`
+                                : '↻ Recorrente'}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3">

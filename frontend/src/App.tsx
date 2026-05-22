@@ -8,6 +8,7 @@ import { ReportsPage } from '@/pages/ReportsPage';
 import { BudgetsPage } from '@/pages/BudgetsPage';
 import { CategoriesPage } from '@/pages/CategoriesPage';
 import { SettingsPage } from '@/pages/SettingsPage';
+import { DreamBoardPage } from '@/pages/DreamBoardPage';
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/budgets" element={<BudgetsPage />} />
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/dream-board" element={<DreamBoardPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

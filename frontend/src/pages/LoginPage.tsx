@@ -32,7 +32,7 @@ export const LoginPage = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <img src="/logo-wide.png" alt="Ato Financeiro" className="h-20 w-auto object-contain mb-2" />
+          <img src="/logo-wide.png" alt="Ato Financeiro" className="h-16 w-auto object-contain" />
           <p className="text-gray-500 dark:text-gray-400 mt-1">Controle total das suas finanças</p>
         </div>
 

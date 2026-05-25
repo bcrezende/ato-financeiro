@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, ArrowLeftRight, PieChart, Target,
-  Tag, Settings, X, TrendingUp, Sparkles,
+  Tag, Settings, X, Sparkles,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -30,13 +30,8 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => (
       ${open ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:z-auto`}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-            <TrendingUp className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-lg font-bold text-gray-900 dark:text-white">Ato Financeiro</span>
-        </div>
+      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+        <img src="/logo.png" alt="Ato Financeiro" className="h-10 w-auto object-contain" />
         <button onClick={onClose} className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
           <X className="w-5 h-5 text-gray-500" />
         </button>

@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 async function migrate() {
   const user = await prisma.user.findUnique({
-    where: { email: 'bruno@rezendetransportes.com.br' },
+    where: { email: 'bcrezende19@hotmail.com' },
   });
 
   if (!user) {

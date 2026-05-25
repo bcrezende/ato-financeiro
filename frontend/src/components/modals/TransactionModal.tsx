@@ -27,6 +27,7 @@ interface FormValues {
   isRecurring: boolean;
   frequency: string;
   installments: string;
+  status: 'PAID' | 'PENDING';
 }
 
 export const TransactionModal = ({ open, onClose, transaction }: TransactionModalProps) => {
@@ -44,6 +45,7 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
       description: '', amount: '', type: 'EXPENSE',
       date: format(new Date(), 'yyyy-MM-dd'), categoryId: '',
       notes: '', isRecurring: false, frequency: '', installments: '',
+      status: 'PENDING',
     },
   });
 
@@ -62,9 +64,10 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
         isRecurring: transaction.isRecurring,
         frequency: transaction.frequency ?? '',
         installments: transaction.installments ? String(transaction.installments) : '',
+        status: transaction.status ?? 'PENDING',
       });
     } else {
-      reset({ description: '', amount: '', type: 'EXPENSE', date: format(new Date(), 'yyyy-MM-dd'), categoryId: '', notes: '', isRecurring: false, frequency: '', installments: '' });
+      reset({ description: '', amount: '', type: 'EXPENSE', date: format(new Date(), 'yyyy-MM-dd'), categoryId: '', notes: '', isRecurring: false, frequency: '', installments: '', status: 'PENDING' });
     }
   }, [transaction, reset, open]);
 
@@ -96,6 +99,7 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
       isRecurring: data.isRecurring,
       frequency: data.isRecurring && data.frequency ? (data.frequency as any) : undefined,
       installments: data.isRecurring && data.installments ? parseInt(data.installments) : (isEditing ? null : undefined),
+      status: data.status,
     };
 
     if (isEditing) {
@@ -189,6 +193,23 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
               {...register('notes')}
             />
           </div>
+        </div>
+
+        {/* Status toggle */}
+        <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          {(['PENDING', 'PAID'] as const).map((s) => (
+            <label
+              key={s}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 cursor-pointer text-sm font-medium transition-colors
+                ${watch('status') === s
+                  ? s === 'PAID' ? 'bg-green-600 text-white' : 'bg-amber-500 text-white'
+                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+            >
+              <input type="radio" value={s} {...register('status')} className="sr-only" />
+              {s === 'PAID' ? '✓ Pago' : '⏳ Pendente'}
+            </label>
+          ))}
         </div>
 
         {/* Recurring */}

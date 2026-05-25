@@ -14,6 +14,7 @@ export const transactionValidators = {
     body('categoryId').isUUID().withMessage('Valid categoryId required'),
     body('frequency').optional().isIn(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
     body('installments').optional().isInt({ min: 2, max: 360 }).withMessage('Parcelas deve ser entre 2 e 360'),
+    body('status').optional().isIn(['PAID', 'PENDING']).withMessage('Status inválido'),
     validate,
   ],
   update: [
@@ -22,6 +23,7 @@ export const transactionValidators = {
     body('type').optional().isIn(['INCOME', 'EXPENSE']),
     body('date').optional().isISO8601(),
     body('categoryId').optional().isUUID(),
+    body('status').optional().isIn(['PAID', 'PENDING']).withMessage('Status inválido'),
     validate,
   ],
 };

@@ -36,6 +36,7 @@ export interface Transaction {
   installments?: number;
   installmentNumber?: number;
   recurringId?: string;
+  status?: 'PAID' | 'PENDING';
   createdAt: string;
 }
 
@@ -59,6 +60,7 @@ export interface MonthlySummary {
   income: number;
   expense: number;
   balance: number;
+  caixa?: number;
 }
 
 export interface MonthlyEvolution {

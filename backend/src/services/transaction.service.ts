@@ -16,6 +16,7 @@ export const transactionService = {
     isRecurring?: boolean;
     frequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
     installments?: number;
+    status?: 'PAID' | 'PENDING';
   }) {
     const category = await prisma.category.findFirst({
       where: { id: data.categoryId, OR: [{ userId }, { isDefault: true }] },
@@ -127,7 +128,7 @@ export const transactionService = {
     }
 
     const safeData: Record<string, any> = {};
-    const allowed = ['description', 'amount', 'type', 'date', 'categoryId', 'notes', 'isRecurring', 'frequency', 'installments'];
+    const allowed = ['description', 'amount', 'type', 'date', 'categoryId', 'notes', 'isRecurring', 'frequency', 'installments', 'status'];
     for (const key of allowed) {
       if (data[key] !== undefined) safeData[key] = data[key] ?? null;
     }
@@ -172,7 +173,7 @@ export const transactionService = {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59);
 
-    const [incomeAgg, expenseAgg] = await Promise.all([
+    const [incomeAgg, expenseAgg, paidIncomeAgg, paidExpenseAgg] = await Promise.all([
       prisma.transaction.aggregate({
         where: { userId, type: 'INCOME', date: { gte: startDate, lte: endDate } },
         _sum: { amount: true },
@@ -181,11 +182,21 @@ export const transactionService = {
         where: { userId, type: 'EXPENSE', date: { gte: startDate, lte: endDate } },
         _sum: { amount: true },
       }),
+      prisma.transaction.aggregate({
+        where: { userId, type: 'INCOME', status: 'PAID', date: { gte: startDate, lte: endDate } },
+        _sum: { amount: true },
+      }),
+      prisma.transaction.aggregate({
+        where: { userId, type: 'EXPENSE', status: 'PAID', date: { gte: startDate, lte: endDate } },
+        _sum: { amount: true },
+      }),
     ]);
 
     const income = incomeAgg._sum.amount ?? 0;
     const expense = expenseAgg._sum.amount ?? 0;
-    return { income, expense, balance: income - expense };
+    const paidIncome = paidIncomeAgg._sum.amount ?? 0;
+    const paidExpense = paidExpenseAgg._sum.amount ?? 0;
+    return { income, expense, balance: income - expense, paidIncome, paidExpense, caixa: paidIncome - paidExpense };
   },
 
   async getByCategory(userId: string, startDate: Date, endDate: Date) {

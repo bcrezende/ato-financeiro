@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge, TransactionBadge } from '@/components/ui/Badge';
@@ -20,7 +20,7 @@ const SummaryCard = ({ label, value, icon: Icon, color, trend }: any) => (
         <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{label}</p>
         <p className={`text-2xl font-bold mt-1 ${color}`}>{formatCurrency(value)}</p>
       </div>
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color === 'text-green-600' ? 'bg-green-100 dark:bg-green-900/30' : color === 'text-red-600' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-primary-100 dark:bg-primary-900/30'}`}>
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color === 'text-green-600' ? 'bg-green-100 dark:bg-green-900/30' : color === 'text-red-600' ? 'bg-red-100 dark:bg-red-900/30' : color === 'text-blue-600' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-primary-100 dark:bg-primary-900/30'}`}>
         <Icon className={`w-6 h-6 ${color}`} />
       </div>
     </div>
@@ -78,7 +78,7 @@ export const DashboardPage = () => {
       )}
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <SummaryCard label="Receitas do Mês" value={summary?.income ?? 0} icon={TrendingUp} color="text-green-600" />
         <SummaryCard label="Despesas do Mês" value={summary?.expense ?? 0} icon={TrendingDown} color="text-red-600" />
         <SummaryCard
@@ -86,6 +86,12 @@ export const DashboardPage = () => {
           value={summary?.balance ?? 0}
           icon={DollarSign}
           color={(summary?.balance ?? 0) >= 0 ? 'text-primary-600' : 'text-red-600'}
+        />
+        <SummaryCard
+          label="Caixa Atual"
+          value={summary?.caixa ?? 0}
+          icon={Wallet}
+          color={(summary?.caixa ?? 0) >= 0 ? 'text-blue-600' : 'text-red-600'}
         />
       </div>
 

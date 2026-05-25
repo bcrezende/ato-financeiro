@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Filter, Download, Pencil, Trash2, RefreshCw } from 'lucide-react';
+import { Plus, Search, Filter, Download, Pencil, Trash2, RefreshCw, CheckCircle2, Circle } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -9,7 +9,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageLoader } from '@/components/ui/Spinner';
 import { TransactionModal } from '@/components/modals/TransactionModal';
-import { useTransactions, useDeleteTransaction, useExportTransactions } from '@/hooks/useTransactions';
+import { useTransactions, useDeleteTransaction, useExportTransactions, useUpdateTransaction } from '@/hooks/useTransactions';
 import { CategoryAvatar } from '@/utils/icons';
 import { useCategories } from '@/hooks/useCategories';
 import { Transaction, TransactionFilters } from '@/types';
@@ -26,6 +26,7 @@ export const TransactionsPage = () => {
   const { data: categories = [] } = useCategories();
   const deleteMutation = useDeleteTransaction();
   const exportMutation = useExportTransactions();
+  const updateMutation = useUpdateTransaction();
 
   const setFilter = (key: keyof TransactionFilters, value: any) =>
     setFilters((f) => ({ ...f, [key]: value, page: 1 }));
@@ -160,6 +161,13 @@ export const TransactionsPage = () => {
                     <p className={`text-sm font-bold ${t.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
                       {t.type === 'INCOME' ? '+' : '-'}{formatCurrency(t.amount)}
                     </p>
+                    <button
+                      onClick={() => updateMutation.mutate({ id: t.id, data: { status: t.status === 'PAID' ? 'PENDING' : 'PAID' } })}
+                      className={`p-1.5 ${t.status === 'PAID' ? 'text-green-500' : 'text-gray-300 hover:text-green-400'}`}
+                      title={t.status === 'PAID' ? 'Marcar como pendente' : 'Marcar como pago'}
+                    >
+                      {t.status === 'PAID' ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
+                    </button>
                     <button onClick={() => { setEditingTx(t); setModalOpen(true); }} className="p-1.5 text-gray-400 hover:text-primary-600">
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
@@ -180,6 +188,7 @@ export const TransactionsPage = () => {
                     <th className="px-4 py-3 text-left font-medium">Descrição</th>
                     <th className="px-4 py-3 text-left font-medium">Categoria</th>
                     <th className="px-4 py-3 text-left font-medium">Tipo</th>
+                    <th className="px-4 py-3 text-left font-medium">Status</th>
                     <th className="px-4 py-3 text-right font-medium">Valor</th>
                     <th className="px-4 py-3 text-right font-medium">Ações</th>
                   </tr>
@@ -209,6 +218,20 @@ export const TransactionsPage = () => {
                         </div>
                       </td>
                       <td className="px-4 py-3"><TransactionBadge type={t.type} /></td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => updateMutation.mutate({ id: t.id, data: { status: t.status === 'PAID' ? 'PENDING' : 'PAID' } })}
+                          className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full transition-colors ${
+                            t.status === 'PAID'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200'
+                              : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 hover:bg-amber-200'
+                          }`}
+                          title="Clique para alternar"
+                        >
+                          {t.status === 'PAID' ? <CheckCircle2 className="w-3 h-3" /> : <Circle className="w-3 h-3" />}
+                          {t.status === 'PAID' ? 'Pago' : 'Pendente'}
+                        </button>
+                      </td>
                       <td className={`px-4 py-3 text-right font-bold ${t.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
                         {t.type === 'INCOME' ? '+' : '-'}{formatCurrency(t.amount)}
                       </td>

@@ -31,7 +31,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => (
     >
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-        <img src="/logo.png" alt="Ato Financeiro" className="h-10 w-auto object-contain" />
+        <img src="/logo-wide.png" alt="Ato Financeiro" className="h-10 w-auto object-contain" />
         <button onClick={onClose} className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
           <X className="w-5 h-5 text-gray-500" />
         </button>

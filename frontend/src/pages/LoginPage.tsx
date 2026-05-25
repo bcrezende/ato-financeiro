@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
-import { TrendingUp, Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { authService } from '@/services/auth.service';
@@ -32,10 +32,7 @@ export const LoginPage = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 bg-primary-600 rounded-2xl flex items-center justify-center shadow-lg mb-4">
-            <TrendingUp className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ato Financeiro</h1>
+          <img src="/logo-icon.png" alt="Ato Financeiro" className="h-24 w-auto object-contain mb-2" />
           <p className="text-gray-500 dark:text-gray-400 mt-1">Controle total das suas finanças</p>
         </div>
 

@@ -80,6 +80,26 @@ export const authController = {
     } catch (e) { next(e); }
   },
 
+  forgotPassword: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email } = req.body;
+      if (!email) { res.status(400).json({ success: false, error: { message: 'Email obrigatório' } }); return; }
+      await authService.forgotPassword(email);
+      // Always 200 — don't leak whether email exists
+      res.json({ success: true, message: 'Se este email estiver cadastrado, você receberá as instruções em breve.' });
+    } catch (e) { next(e); }
+  },
+
+  resetPassword: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { token, newPassword } = req.body;
+      if (!token || !newPassword) { res.status(400).json({ success: false, error: { message: 'Token e nova senha são obrigatórios' } }); return; }
+      if (newPassword.length < 8) { res.status(400).json({ success: false, error: { message: 'Senha deve ter no mínimo 8 caracteres' } }); return; }
+      await authService.resetPassword(token, newPassword);
+      res.json({ success: true, message: 'Senha redefinida com sucesso!' });
+    } catch (e) { next(e); }
+  },
+
   deleteAccount: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { password } = req.body;

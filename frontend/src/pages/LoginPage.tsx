@@ -67,6 +67,12 @@ export const LoginPage = () => {
               {...register('password', { required: 'Senha obrigatória' })}
             />
 
+            <div className="flex justify-end -mt-1">
+              <Link to="/forgot-password" className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400">
+                Esqueceu a senha?
+              </Link>
+            </div>
+
             <Button type="submit" loading={isSubmitting} className="w-full" size="lg">
               Entrar
             </Button>

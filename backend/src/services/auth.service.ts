@@ -1,8 +1,10 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 import prisma from '../utils/prisma';
 import { ConflictError, UnauthorizedError, NotFoundError } from '../utils/errors';
+import { emailService } from './email.service';
 import { JwtPayload } from '../types';
 
 const SALT_ROUNDS = 12;
@@ -97,6 +99,39 @@ export const authService = {
     if (!valid) throw new UnauthorizedError('Current password is incorrect');
     const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
     await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+  },
+
+  async forgotPassword(email: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    // Always return silently — don't reveal whether email exists
+    if (!user) return;
+
+    // Invalidate previous tokens
+    await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await prisma.passwordResetToken.create({ data: { token, userId: user.id, expiresAt } });
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+    await emailService.sendPasswordReset({ email: user.email, name: user.name }, resetUrl);
+  },
+
+  async resetPassword(token: string, newPassword: string) {
+    const record = await prisma.passwordResetToken.findUnique({ where: { token } });
+    if (!record || record.used || record.expiresAt < new Date()) {
+      throw new UnauthorizedError('Link inválido ou expirado. Solicite um novo.');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: record.userId }, data: { passwordHash } }),
+      prisma.passwordResetToken.update({ where: { token }, data: { used: true } }),
+      // Invalidate all refresh tokens so existing sessions are logged out
+      prisma.refreshToken.deleteMany({ where: { userId: record.userId } }),
+    ]);
   },
 
   async deleteAccount(userId: string, password: string) {

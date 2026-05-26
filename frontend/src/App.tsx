@@ -11,6 +11,8 @@ import { SettingsPage } from '@/pages/SettingsPage';
 import { DreamBoardPage } from '@/pages/DreamBoardPage';
 import { SubscriptionPage } from '@/pages/SubscriptionPage';
 import { SubscriptionSuccessPage } from '@/pages/SubscriptionSuccessPage';
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 
 export default function App() {
   return (
@@ -19,6 +21,8 @@ export default function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/subscription" element={<SubscriptionPage />} />
       <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route element={<AppLayout />}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/transactions" element={<TransactionsPage />} />

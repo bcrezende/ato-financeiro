@@ -22,10 +22,11 @@ model User {
   stripeCustomerId     String?   @unique @map("stripe_customer_id")
   stripeSubscriptionId String?   @map("stripe_subscription_id")
 
-  transactions  Transaction[]
-  categories    Category[]
-  budgets       Budget[]
-  refreshTokens RefreshToken[]
+  transactions         Transaction[]
+  categories           Category[]
+  budgets              Budget[]
+  refreshTokens        RefreshToken[]
+  passwordResetTokens  PasswordResetToken[]
 
   @@map("users")
 }
@@ -40,6 +41,19 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }
 
 model Category {

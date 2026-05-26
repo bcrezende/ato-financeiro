@@ -11,7 +11,7 @@ interface SidebarProps {
 }
 
 const nav = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/transactions', icon: ArrowLeftRight, label: 'Transações' },
   { to: '/reports', icon: PieChart, label: 'Relatórios' },
   { to: '/budgets', icon: Target, label: 'Orçamentos' },
@@ -88,7 +88,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => (
           <NavLink
             key={to}
             to={to}
-            end={to === '/'}
+            end={to === '/dashboard'}
             onClick={() => window.innerWidth < 1024 && onClose()}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium mb-1 transition-all

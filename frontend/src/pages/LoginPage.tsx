@@ -20,7 +20,7 @@ export const LoginPage = () => {
     try {
       const result = await authService.login(data);
       setAuth(result.user, result.accessToken, result.refreshToken);
-      navigate('/');
+      navigate('/dashboard');
       toast.success(`Bem-vindo, ${result.user.name}!`);
     } catch (e: any) {
       toast.error(e.response?.data?.error?.message ?? 'Credenciais inválidas');

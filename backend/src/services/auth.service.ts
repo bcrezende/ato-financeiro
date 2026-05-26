@@ -14,8 +14,12 @@ export const authService = {
 
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
     const user = await prisma.user.create({
-      data: { email, name, passwordHash },
-      select: { id: true, email: true, name: true, createdAt: true },
+      data: {
+        email, name, passwordHash,
+        trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        subscriptionStatus: 'TRIAL',
+      },
+      select: { id: true, email: true, name: true, subscriptionStatus: true, trialEndsAt: true, createdAt: true },
     });
     return user;
   },
@@ -29,7 +33,7 @@ export const authService = {
 
     const { accessToken, refreshToken } = await this.generateTokens(user.id, user.email);
     return {
-      user: { id: user.id, email: user.email, name: user.name },
+      user: { id: user.id, email: user.email, name: user.name, subscriptionStatus: user.subscriptionStatus, trialEndsAt: user.trialEndsAt },
       accessToken,
       refreshToken,
     };
@@ -72,7 +76,7 @@ export const authService = {
   async getProfile(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, name: true, avatarUrl: true, currency: true, locale: true, createdAt: true },
+      select: { id: true, email: true, name: true, avatarUrl: true, currency: true, locale: true, subscriptionStatus: true, trialEndsAt: true, createdAt: true },
     });
     if (!user) throw new NotFoundError('User');
     return user;

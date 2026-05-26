@@ -10,6 +10,8 @@ export interface User {
   currency: string;
   locale: string;
   createdAt: string;
+  subscriptionStatus?: 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'EXPIRED';
+  trialEndsAt?: string | null;
 }
 
 export interface Category {

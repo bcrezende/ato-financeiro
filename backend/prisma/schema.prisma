@@ -15,8 +15,12 @@ model User {
   avatarUrl    String?  @map("avatar_url")
   currency     String   @default("BRL")
   locale       String   @default("pt-BR")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  trialEndsAt          DateTime? @map("trial_ends_at")
+  subscriptionStatus   String    @default("TRIAL") @map("subscription_status")
+  stripeCustomerId     String?   @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?   @map("stripe_subscription_id")
 
   transactions  Transaction[]
   categories    Category[]

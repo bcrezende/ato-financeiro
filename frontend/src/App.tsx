@@ -9,12 +9,16 @@ import { BudgetsPage } from '@/pages/BudgetsPage';
 import { CategoriesPage } from '@/pages/CategoriesPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { DreamBoardPage } from '@/pages/DreamBoardPage';
+import { SubscriptionPage } from '@/pages/SubscriptionPage';
+import { SubscriptionSuccessPage } from '@/pages/SubscriptionSuccessPage';
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/subscription" element={<SubscriptionPage />} />
+      <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
       <Route element={<AppLayout />}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/transactions" element={<TransactionsPage />} />

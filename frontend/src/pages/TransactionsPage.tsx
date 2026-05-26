@@ -34,12 +34,12 @@ export const TransactionsPage = () => {
   const categoryOptions = categories.map((c) => ({ value: c.id, label: c.name }));
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5 animate-fade-in pb-6">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Transações</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">Transações</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {data?.pagination?.total ?? 0} transação(ões) encontrada(s)
+            <span className="font-semibold text-gray-700 dark:text-gray-300">{data?.pagination?.total ?? 0}</span> transaç{(data?.pagination?.total ?? 0) === 1 ? 'ão' : 'ões'} encontrada{(data?.pagination?.total ?? 0) === 1 ? '' : 's'}
           </p>
         </div>
         <div className="flex gap-2">
@@ -183,25 +183,25 @@ export const TransactionsPage = () => {
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400">
-                    <th className="px-4 py-3 text-left font-medium">Data</th>
-                    <th className="px-4 py-3 text-left font-medium">Descrição</th>
-                    <th className="px-4 py-3 text-left font-medium">Categoria</th>
-                    <th className="px-4 py-3 text-left font-medium">Tipo</th>
-                    <th className="px-4 py-3 text-left font-medium">Status</th>
-                    <th className="px-4 py-3 text-right font-medium">Valor</th>
-                    <th className="px-4 py-3 text-right font-medium">Ações</th>
+                  <tr className="bg-gray-50/70 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400">
+                    <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-widest">Data</th>
+                    <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-widest">Descrição</th>
+                    <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-widest">Categoria</th>
+                    <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-widest">Tipo</th>
+                    <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-widest">Status</th>
+                    <th className="px-5 py-3.5 text-right text-[10px] font-bold uppercase tracking-widest">Valor</th>
+                    <th className="px-5 py-3.5 text-right text-[10px] font-bold uppercase tracking-widest">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                   {data.data.map((t) => (
-                    <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">{formatDate(t.date)}</td>
-                      <td className="px-4 py-3">
+                    <tr key={t.id} className="group hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors">
+                      <td className="px-5 py-3.5 text-gray-600 dark:text-gray-400 whitespace-nowrap text-xs font-medium">{formatDate(t.date)}</td>
+                      <td className="px-5 py-3.5">
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{t.description}</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{t.description}</p>
                           {t.isRecurring && (
-                            <span className="text-xs text-purple-600 dark:text-purple-400">
+                            <span className="text-[10px] font-semibold text-purple-600 dark:text-purple-400 inline-flex items-center gap-0.5 mt-0.5">
                               {t.installments && t.installmentNumber
                                 ? `↻ Parcela ${t.installmentNumber}/${t.installments}`
                                 : t.installments
@@ -211,20 +211,20 @@ export const TransactionsPage = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: t.category?.color }} />
-                          <span className="text-gray-700 dark:text-gray-300">{t.category?.name}</span>
+                      <td className="px-5 py-3.5">
+                        <div className="inline-flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800/60 px-2.5 py-1 rounded-md">
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: t.category?.color }} />
+                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{t.category?.name}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3"><TransactionBadge type={t.type} /></td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3.5"><TransactionBadge type={t.type} /></td>
+                      <td className="px-5 py-3.5">
                         <button
                           onClick={() => updateMutation.mutate({ id: t.id, data: { status: t.status === 'PAID' ? 'PENDING' : 'PAID' } })}
-                          className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full transition-colors ${
+                          className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full transition-colors ${
                             t.status === 'PAID'
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200'
-                              : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 hover:bg-amber-200'
+                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 hover:bg-emerald-200'
+                              : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 hover:bg-amber-200'
                           }`}
                           title="Clique para alternar"
                         >
@@ -232,15 +232,15 @@ export const TransactionsPage = () => {
                           {t.status === 'PAID' ? 'Pago' : 'Pendente'}
                         </button>
                       </td>
-                      <td className={`px-4 py-3 text-right font-bold ${t.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
+                      <td className={`px-5 py-3.5 text-right font-extrabold tabular-nums ${t.type === 'INCOME' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                         {t.type === 'INCOME' ? '+' : '-'}{formatCurrency(t.amount)}
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => { setEditingTx(t); setModalOpen(true); }} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-primary-600 transition-colors">
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center justify-end gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => { setEditingTx(t); setModalOpen(true); }} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-primary-600 transition-colors">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => setDeletingId(t.id)} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-600 transition-colors">
+                          <button onClick={() => setDeletingId(t.id)} className="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 text-gray-400 hover:text-rose-600 transition-colors">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>

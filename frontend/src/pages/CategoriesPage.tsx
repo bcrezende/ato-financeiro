@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Plus, Pencil, Trash2, Tag } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageLoader } from '@/components/ui/Spinner';
@@ -26,11 +25,13 @@ export const CategoriesPage = () => {
   if (isLoading) return <PageLoader />;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 animate-fade-in pb-6">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Categorias</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{categories.length} categorias disponíveis</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">Categorias</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            <span className="font-semibold text-gray-700 dark:text-gray-300">{categories.length}</span> categorias disponíveis
+          </p>
         </div>
         <Button icon={<Plus className="w-4 h-4" />} onClick={() => { setEditingCat(null); setModalOpen(true); }}>
           Nova Categoria
@@ -38,18 +39,30 @@ export const CategoriesPage = () => {
       </div>
 
       {/* Type tabs */}
-      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 w-fit">
-        {(['EXPENSE', 'INCOME'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setActiveType(t)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all
-              ${activeType === t ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'}`}
-          >
-            {t === 'INCOME' ? 'Receitas' : 'Despesas'}
-            <span className="ml-2 text-xs text-gray-400">({filtered.length})</span>
-          </button>
-        ))}
+      <div className="flex gap-0.5 bg-gray-100 dark:bg-gray-800/60 rounded-xl p-1 w-fit shadow-inner">
+        {(['EXPENSE', 'INCOME'] as const).map((t) => {
+          const count = categories.filter((c) => c.type === t).length;
+          return (
+            <button
+              key={t}
+              onClick={() => setActiveType(t)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all
+                ${activeType === t
+                  ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                }`}
+            >
+              {t === 'INCOME' ? 'Receitas' : 'Despesas'}
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                activeType === t
+                  ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
+              }`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Default categories */}
@@ -114,21 +127,25 @@ export const CategoriesPage = () => {
 };
 
 const CategoryItem = ({ category: c, onEdit, onDelete }: { category: Category; onEdit?: () => void; onDelete?: () => void }) => (
-  <div className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
+  <div className="group flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 hover:bg-gray-50/70 dark:hover:bg-gray-800/40 hover:shadow-sm transition-all">
     <CategoryAvatar icon={c.icon} color={c.color} name={c.name} />
     <div className="flex-1 min-w-0">
-      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.name}</p>
-      {c.isDefault && <Badge color="#94a3b8" size="sm">Padrão</Badge>}
+      <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{c.name}</p>
+      {c.isDefault && (
+        <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded-md mt-0.5">
+          Padrão
+        </span>
+      )}
     </div>
     {!c.isDefault && (
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         {onEdit && (
-          <button onClick={onEdit} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-400 hover:text-primary-600">
+          <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-primary-600 transition-colors">
             <Pencil className="w-3.5 h-3.5" />
           </button>
         )}
         {onDelete && (
-          <button onClick={onDelete} className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-600">
+          <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 text-gray-400 hover:text-rose-600 transition-colors">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         )}

@@ -84,24 +84,31 @@ export const DreamBoardPage = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-amber-500" />
-            Quadro dos Sonhos
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Visualize seus objetivos todos os dias
-          </p>
+    <div className="space-y-6 animate-fade-in pb-6">
+      {/* Header — gradient hero */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 rounded-3xl p-6 sm:p-8 text-white">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-300/30 rounded-full blur-3xl animate-blob pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-pink-400/20 rounded-full blur-3xl animate-blob pointer-events-none" style={{ animationDelay: '3s' }} />
+
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-white/20">
+              <Sparkles className="w-3 h-3" />
+              Inspiração diária
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-1">Quadro dos Sonhos</h1>
+            <p className="text-sm text-amber-50/90">
+              Visualize seus objetivos e mantenha a motivação no dia a dia
+            </p>
+          </div>
+          <Button
+            onClick={() => fileRef.current?.click()}
+            className="!bg-white !text-amber-700 hover:!bg-amber-50 shadow-xl whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4" />
+            Adicionar Sonho
+          </Button>
         </div>
-        <Button
-          icon={<Plus className="w-4 h-4" />}
-          onClick={() => fileRef.current?.click()}
-        >
-          Adicionar Sonho
-        </Button>
         <input
           ref={fileRef}
           type="file"
@@ -119,26 +126,29 @@ export const DreamBoardPage = () => {
           onDrop={onDrop}
           onClick={() => fileRef.current?.click()}
           className={`
-            flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed cursor-pointer
-            transition-colors min-h-[420px]
+            relative overflow-hidden flex flex-col items-center justify-center gap-5 rounded-3xl border-2 border-dashed cursor-pointer
+            transition-all duration-300 min-h-[420px] p-6
             ${dragging
-              ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20'
-              : 'border-gray-300 dark:border-gray-600 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/10'
+              ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 scale-[1.01]'
+              : 'border-gray-300 dark:border-gray-700 hover:border-amber-400 hover:bg-amber-50/50 dark:hover:bg-amber-900/10'
             }
           `}
         >
-          <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-            <Sparkles className="w-10 h-10 text-amber-500" />
+          <div className="relative">
+            <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-xl shadow-amber-200/50 dark:shadow-amber-900/40 animate-float">
+              <Sparkles className="w-12 h-12 text-white" />
+            </div>
+            <div className="absolute -inset-3 bg-amber-300/30 rounded-3xl blur-xl -z-10" />
           </div>
           <div className="text-center">
-            <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">Seu quadro está vazio</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Arraste imagens aqui ou clique para adicionar seus sonhos
+            <p className="text-xl font-extrabold text-gray-700 dark:text-gray-200">Seu quadro está vazio</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-sm">
+              Adicione fotos dos seus objetivos — uma viagem, uma casa, um carro — e mantenha-os visíveis todos os dias
             </p>
           </div>
-          <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 font-medium">
+          <div className="inline-flex items-center gap-2 text-sm font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-4 py-2 rounded-xl">
             <Upload className="w-4 h-4" />
-            Carregar imagem
+            Arrastar ou clicar para carregar
           </div>
         </div>
       ) : (

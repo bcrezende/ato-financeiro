@@ -4,6 +4,7 @@ import {
   Tag, Settings, X, Sparkles, Crown, Zap, CheckCircle2, ArrowRight,
 } from 'lucide-react';
 import { useSubscriptionStatus } from '@/hooks/useSubscription';
+import { InstallPWA } from '@/components/pwa/InstallPWA';
 
 interface SidebarProps {
   open: boolean;
@@ -122,8 +123,9 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => (
         ))}
       </nav>
 
-      {/* Subscription CTA */}
+      {/* Footer: install + subscription */}
       <div className="border-t border-gray-200/60 dark:border-gray-800/60 pt-3">
+        <InstallPWA />
         <SubscriptionCTA />
         <div className="px-6 pb-3">
           <p className="text-[10px] text-gray-400 dark:text-gray-600 font-medium">v1.0.0</p>

@@ -27,7 +27,10 @@ export const AppLayout = () => {
   if (blocked) return <Navigate to="/subscription" replace />;
 
   // Also block if TRIAL but expired (daysLeft === 0 and status is EXPIRED after backend auto-updates)
-  const showTrialBanner = subStatus?.subscriptionStatus === 'TRIAL' && (subStatus.daysLeft ?? 0) <= 7;
+  const isTrial = subStatus?.subscriptionStatus === 'TRIAL';
+  const daysLeft = subStatus?.daysLeft ?? 0;
+  const showTrialBanner = isTrial;
+  const trialUrgent = daysLeft <= 7;
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
@@ -40,12 +43,22 @@ export const AppLayout = () => {
         />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           {showTrialBanner && (
-            <div className="mb-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 flex items-center justify-between">
-              <p className="text-sm text-amber-800 dark:text-amber-400 font-medium">
-                ⏳ Seu período gratuito termina em <strong>{subStatus?.daysLeft} dia{subStatus?.daysLeft !== 1 ? 's' : ''}</strong>
+            <div className={`mb-4 rounded-xl px-4 py-3 flex items-center justify-between border ${
+              trialUrgent
+                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+            }`}>
+              <p className={`text-sm font-medium ${trialUrgent ? 'text-red-800 dark:text-red-400' : 'text-blue-800 dark:text-blue-400'}`}>
+                {trialUrgent ? '⚠️' : '🎉'}{' '}
+                {daysLeft > 0
+                  ? <>Período gratuito: <strong>{daysLeft} dia{daysLeft !== 1 ? 's' : ''} restante{daysLeft !== 1 ? 's' : ''}</strong></>
+                  : <strong>Seu período gratuito expirou</strong>
+                }
               </p>
               <Link to="/subscription">
-                <button className="flex items-center gap-1.5 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg transition-colors">
+                <button className={`flex items-center gap-1.5 text-xs font-semibold text-white px-3 py-1.5 rounded-lg transition-colors ${
+                  trialUrgent ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
+                }`}>
                   <Zap className="w-3 h-3" />
                   Assinar agora
                 </button>

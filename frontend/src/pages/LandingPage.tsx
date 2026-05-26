@@ -189,9 +189,9 @@ export const LandingPage = () => {
             : 'bg-transparent'
         }`}
       >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
           <Link to="/" className="flex items-center">
-            <img src="/logo-wide.png" alt="Ato Financeiro" className="h-9 w-auto object-contain" />
+            <img src="/logo-wide.png" alt="Ato Financeiro" className="h-16 w-auto object-contain" />
           </Link>
 
           {/* Desktop nav */}
@@ -661,7 +661,7 @@ export const LandingPage = () => {
       <footer className="border-t border-gray-100 dark:border-gray-800 py-10 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src="/logo-wide.png" alt="Ato Financeiro" className="h-8 w-auto opacity-80" />
+            <img src="/logo-wide.png" alt="Ato Financeiro" className="h-12 w-auto opacity-90" />
           </div>
           <div className="flex items-center gap-6 text-xs text-gray-400">
             <Link to="/login" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Entrar</Link>

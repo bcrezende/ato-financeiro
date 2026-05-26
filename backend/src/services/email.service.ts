@@ -14,8 +14,8 @@ export const emailService = {
         <!-- Header -->
         <tr>
           <td style="background:linear-gradient(135deg,#6366f1,#4f46e5);padding:32px 40px;text-align:center">
-            <p style="margin:0;font-size:22px;font-weight:700;color:#fff;letter-spacing:-0.3px">Ato Financeiro</p>
-            <p style="margin:6px 0 0;font-size:13px;color:#c7d2fe">Controle total das suas finanças</p>
+            <img src="https://ato.rezendetech.com.br/logo-email.png" alt="Ato Financeiro" width="200" style="display:inline-block;max-width:200px;height:auto;border:0;outline:none;text-decoration:none" />
+            <p style="margin:10px 0 0;font-size:13px;color:#c7d2fe">Controle total das suas finanças</p>
           </td>
         </tr>
 

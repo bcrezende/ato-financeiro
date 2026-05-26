@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { User, Lock, Globe } from 'lucide-react';
+import { User, Lock, Globe, Crown, CreditCard, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth.store';
+import { useSubscriptionStatus, useCheckout, useBillingPortal } from '@/hooks/useSubscription';
 import toast from 'react-hot-toast';
 
 const CURRENCIES = [
@@ -20,6 +21,102 @@ const LOCALES = [
   { value: 'en-US', label: 'English (US)' },
   { value: 'es-ES', label: 'Español' },
 ];
+
+const SubscriptionSection = () => {
+  const { data: sub, isLoading } = useSubscriptionStatus();
+  const checkout = useCheckout();
+  const portal = useBillingPortal();
+
+  if (isLoading) {
+    return (
+      <Card title="Assinatura" action={<Crown className="w-5 h-5 text-yellow-500" />}>
+        <div className="h-20 flex items-center justify-center">
+          <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </Card>
+    );
+  }
+
+  const status = sub?.subscriptionStatus ?? 'TRIAL';
+  const daysLeft = sub?.daysLeft ?? 0;
+
+  const statusBadge = () => {
+    if (status === 'ACTIVE') return (
+      <span className="inline-flex items-center gap-1.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2.5 py-1 rounded-full font-semibold">
+        <CheckCircle2 className="w-3.5 h-3.5" /> Pro Ativo
+      </span>
+    );
+    if (status === 'TRIAL') return (
+      <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-semibold ${
+        daysLeft <= 7
+          ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+          : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+      }`}>
+        <Clock className="w-3.5 h-3.5" />
+        {daysLeft > 0 ? `Trial — ${daysLeft} dia${daysLeft !== 1 ? 's' : ''} restante${daysLeft !== 1 ? 's' : ''}` : 'Trial expirado'}
+      </span>
+    );
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2.5 py-1 rounded-full font-semibold">
+        <AlertTriangle className="w-3.5 h-3.5" /> Sem assinatura ativa
+      </span>
+    );
+  };
+
+  return (
+    <Card title="Assinatura" action={<Crown className="w-5 h-5 text-yellow-500" />}>
+      <div className="space-y-4">
+        {/* Status */}
+        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+          <div>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Plano atual</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {status === 'ACTIVE' ? 'Ato Pro — R$19,90/mês' : 'Ato Pro — R$19,90/mês · cobrado mensalmente'}
+            </p>
+          </div>
+          {statusBadge()}
+        </div>
+
+        {/* Action */}
+        <div className="flex justify-end gap-3">
+          {status === 'ACTIVE' ? (
+            <Button
+              variant="secondary"
+              onClick={() => portal.mutate()}
+              loading={portal.isPending}
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              Gerenciar Assinatura
+            </Button>
+          ) : (
+            <>
+              {/* If they had an active subscription before, also show portal */}
+              <Button
+                onClick={() => checkout.mutate()}
+                loading={checkout.isPending}
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                {status === 'TRIAL' ? 'Assinar Agora — R$19,90/mês' : 'Reativar Assinatura'}
+              </Button>
+            </>
+          )}
+        </div>
+
+        {/* Info note */}
+        {status === 'ACTIVE' && (
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Gerencie seu cartão, histórico de faturas e cancelamento pelo portal de cobrança.
+          </p>
+        )}
+        {status === 'TRIAL' && daysLeft > 0 && (
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Você está no período gratuito. Assine antes que ele expire para continuar usando o Ato sem interrupção.
+          </p>
+        )}
+      </div>
+    </Card>
+  );
+};
 
 export const SettingsPage = () => {
   const { user, setUser } = useAuthStore();
@@ -135,6 +232,9 @@ export const SettingsPage = () => {
           </div>
         </form>
       </Card>
+
+      {/* Subscription */}
+      <SubscriptionSection />
     </div>
   );
 };

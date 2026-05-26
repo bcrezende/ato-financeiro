@@ -19,4 +19,7 @@ export const authService = {
 
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     api.put('/auth/password', data),
+
+  deleteAccount: (password: string) =>
+    api.delete('/auth/account', { data: { password } }),
 };

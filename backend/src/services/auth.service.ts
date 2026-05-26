@@ -98,4 +98,13 @@ export const authService = {
     const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
     await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
   },
+
+  async deleteAccount(userId: string, password: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundError('User');
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) throw new UnauthorizedError('Senha incorreta');
+    // Cascade deletes handle: transactions, categories, budgets, refreshTokens
+    await prisma.user.delete({ where: { id: userId } });
+  },
 };

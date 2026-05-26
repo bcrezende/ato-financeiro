@@ -79,4 +79,13 @@ export const authController = {
       res.json({ success: true, message: 'Password updated' });
     } catch (e) { next(e); }
   },
+
+  deleteAccount: async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { password } = req.body;
+      if (!password) { res.status(400).json({ success: false, error: { message: 'Senha obrigatória' } }); return; }
+      await authService.deleteAccount(req.userId!, password);
+      res.json({ success: true, message: 'Account deleted' });
+    } catch (e) { next(e); }
+  },
 };

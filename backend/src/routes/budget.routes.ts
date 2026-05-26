@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import { budgetController, budgetValidators } from '../controllers/budget.controller';
 import { authenticate } from '../middlewares/auth.middleware';
+import { requireActiveSubscription } from '../middlewares/subscription.middleware';
 
 const router = Router();
 router.use(authenticate);
+router.use(requireActiveSubscription);
 
 router.get('/', budgetController.findAll);
 router.post('/', budgetValidators.create, budgetController.create);

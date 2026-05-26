@@ -43,6 +43,14 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+model ProcessedWebhook {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now()) @map("processed_at")
+
+  @@map("processed_webhooks")
+}
+
 model PasswordResetToken {
   id        String   @id @default(uuid())
   token     String   @unique

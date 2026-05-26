@@ -119,16 +119,23 @@ export const authService = {
   },
 
   async resetPassword(token: string, newPassword: string) {
-    const record = await prisma.passwordResetToken.findUnique({ where: { token } });
-    if (!record || record.used || record.expiresAt < new Date()) {
+    // Atomically claim the token: only ONE concurrent request can flip used:false → true
+    // for a valid, unexpired token. This closes the check-then-act race condition.
+    const claimed = await prisma.passwordResetToken.updateMany({
+      where: { token, used: false, expiresAt: { gt: new Date() } },
+      data: { used: true },
+    });
+    if (claimed.count === 0) {
       throw new UnauthorizedError('Link inválido ou expirado. Solicite um novo.');
     }
+
+    const record = await prisma.passwordResetToken.findUnique({ where: { token } });
+    if (!record) throw new UnauthorizedError('Link inválido ou expirado. Solicite um novo.');
 
     const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
     await prisma.$transaction([
       prisma.user.update({ where: { id: record.userId }, data: { passwordHash } }),
-      prisma.passwordResetToken.update({ where: { token }, data: { used: true } }),
       // Invalidate all refresh tokens so existing sessions are logged out
       prisma.refreshToken.deleteMany({ where: { userId: record.userId } }),
     ]);

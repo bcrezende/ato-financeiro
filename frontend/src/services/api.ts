@@ -25,6 +25,16 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
+
+    // Backend now enforces subscription server-side. If access lapses mid-session,
+    // the API returns 402 SUBSCRIPTION_REQUIRED — route the user to the paywall.
+    if (error.response?.status === 402 && error.response?.data?.error?.code === 'SUBSCRIPTION_REQUIRED') {
+      if (window.location.pathname !== '/subscription') {
+        window.location.href = '/subscription';
+      }
+      return Promise.reject(error);
+    }
+
     if (error.response?.status !== 401 || original._retry) {
       return Promise.reject(error);
     }

@@ -21,6 +21,25 @@ export const authValidators = {
     body('newPassword').isLength({ min: 8 }).withMessage('New password must be at least 8 characters'),
     validate,
   ],
+  refresh: [
+    body('refreshToken').isString().trim().notEmpty().withMessage('refreshToken required'),
+    validate,
+  ],
+  forgotPassword: [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
+    validate,
+  ],
+  resetPassword: [
+    body('token').isString().trim().notEmpty().withMessage('Token required'),
+    body('newPassword').isLength({ min: 8 }).withMessage('New password must be at least 8 characters'),
+    validate,
+  ],
+  updateProfile: [
+    body('name').optional().trim().isLength({ min: 2, max: 100 }).withMessage('Name must be 2-100 characters'),
+    body('currency').optional().isIn(['BRL', 'USD', 'EUR']).withMessage('Invalid currency'),
+    body('locale').optional().isIn(['pt-BR', 'en-US', 'es-ES']).withMessage('Invalid locale'),
+    validate,
+  ],
 };
 
 export const authController = {

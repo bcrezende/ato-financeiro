@@ -55,6 +55,24 @@ export const subscriptionService = {
   },
 
   async handleWebhookEvent(event: StripeEvent) {
+    const eventId = (event as any).id as string;
+    const eventType = (event as any).type as string;
+
+    // Idempotency: skip events we've already processed (Stripe delivers at-least-once)
+    if (eventId) {
+      const seen = await prisma.processedWebhook.findUnique({ where: { id: eventId } });
+      if (seen) return;
+    }
+
+    await this.processEvent(event);
+
+    // Record after successful processing so a failed handler can be retried by Stripe
+    if (eventId) {
+      await prisma.processedWebhook.create({ data: { id: eventId, type: eventType } }).catch(() => {});
+    }
+  },
+
+  async processEvent(event: StripeEvent) {
     switch ((event as any).type) {
       case 'checkout.session.completed': {
         const session = (event as any).data.object;

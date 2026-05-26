@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import { transactionController, transactionValidators } from '../controllers/transaction.controller';
 import { authenticate } from '../middlewares/auth.middleware';
+import { requireActiveSubscription } from '../middlewares/subscription.middleware';
 
 const router = Router();
 router.use(authenticate);
+router.use(requireActiveSubscription);
 
 router.get('/', transactionController.findAll);
 router.post('/', transactionValidators.create, transactionController.create);

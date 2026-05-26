@@ -38,13 +38,16 @@ export const ForgotPasswordPage = () => {
                 <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
               </div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">E-mail enviado!</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                 Se <strong className="text-gray-700 dark:text-gray-300">{sentEmail}</strong> estiver cadastrado,
                 você receberá as instruções em breve.
               </p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
-                Verifique também a pasta de spam. O link expira em 1 hora.
-              </p>
+              <div className="flex items-start gap-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl px-4 py-3 text-left mb-6">
+                <span className="text-lg leading-none mt-0.5">📬</span>
+                <p className="text-xs text-yellow-800 dark:text-yellow-300 leading-relaxed">
+                  Não encontrou o e-mail? Verifique sua <strong>caixa de spam</strong> ou <strong>lixo eletrônico</strong>. O link expira em <strong>1 hora</strong>.
+                </p>
+              </div>
               <Link to="/login">
                 <Button variant="secondary" className="w-full">
                   <ArrowLeft className="w-4 h-4 mr-2" />

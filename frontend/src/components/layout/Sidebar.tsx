@@ -83,8 +83,8 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => (
       ${open ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:z-auto`}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between h-20 px-4 border-b border-gray-200/60 dark:border-gray-800/60">
-        <img src="/logo-wide.png" alt="Ato Financeiro" className="h-14 w-auto object-contain" />
+      <div className="flex items-center justify-between h-24 px-4 border-b border-gray-200/60 dark:border-gray-800/60">
+        <img src="/logo-wide.png" alt="Ato Financeiro" className="h-20 w-auto object-contain" />
         <button onClick={onClose} className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
           <X className="w-5 h-5 text-gray-500" />
         </button>

@@ -7,7 +7,7 @@ export const useSubscriptionStatus = () =>
     queryKey: ['subscription-status'],
     queryFn: async () => {
       const res = await api.get('/subscription/status');
-      return res.data.data as { subscriptionStatus: string; trialEndsAt: string | null; daysLeft: number | null };
+      return res.data.data as { subscriptionStatus: string; trialEndsAt: string | null; daysLeft: number | null; hasPortal: boolean };
     },
     staleTime: 60_000,
   });

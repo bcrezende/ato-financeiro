@@ -46,7 +46,12 @@ export const subscriptionService = {
     const daysLeft = user.trialEndsAt
       ? Math.max(0, Math.ceil((user.trialEndsAt.getTime() - Date.now()) / 86400000))
       : null;
-    return { subscriptionStatus: user.subscriptionStatus, trialEndsAt: user.trialEndsAt, daysLeft };
+    return {
+      subscriptionStatus: user.subscriptionStatus,
+      trialEndsAt: user.trialEndsAt,
+      daysLeft,
+      hasPortal: !!user.stripeCustomerId,
+    };
   },
 
   async handleWebhookEvent(event: StripeEvent) {

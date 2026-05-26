@@ -40,6 +40,7 @@ const SubscriptionSection = () => {
 
   const status = sub?.subscriptionStatus ?? 'TRIAL';
   const daysLeft = sub?.daysLeft ?? 0;
+  const hasPortal = sub?.hasPortal ?? false;
 
   const statusBadge = () => {
     if (status === 'ACTIVE') return (
@@ -80,7 +81,7 @@ const SubscriptionSection = () => {
 
         {/* Action */}
         <div className="flex justify-end gap-3">
-          {status === 'ACTIVE' ? (
+          {status === 'ACTIVE' && hasPortal ? (
             <Button
               variant="secondary"
               onClick={() => portal.mutate()}
@@ -89,22 +90,25 @@ const SubscriptionSection = () => {
               <CreditCard className="w-4 h-4 mr-2" />
               Gerenciar Assinatura
             </Button>
+          ) : status === 'ACTIVE' && !hasPortal ? (
+            /* Owner account manually set to ACTIVE — no Stripe customer */
+            <span className="inline-flex items-center gap-1.5 text-xs bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-3 py-2 rounded-xl border border-green-200 dark:border-green-800">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Acesso vitalício ativo
+            </span>
           ) : (
-            <>
-              {/* If they had an active subscription before, also show portal */}
-              <Button
-                onClick={() => checkout.mutate()}
-                loading={checkout.isPending}
-              >
-                <Crown className="w-4 h-4 mr-2" />
-                {status === 'TRIAL' ? 'Assinar Agora — R$19,90/mês' : 'Reativar Assinatura'}
-              </Button>
-            </>
+            <Button
+              onClick={() => checkout.mutate()}
+              loading={checkout.isPending}
+            >
+              <Crown className="w-4 h-4 mr-2" />
+              {status === 'TRIAL' ? 'Assinar Agora — R$19,90/mês' : 'Reativar Assinatura'}
+            </Button>
           )}
         </div>
 
         {/* Info note */}
-        {status === 'ACTIVE' && (
+        {status === 'ACTIVE' && hasPortal && (
           <p className="text-xs text-gray-400 dark:text-gray-500">
             Gerencie seu cartão, histórico de faturas e cancelamento pelo portal de cobrança.
           </p>

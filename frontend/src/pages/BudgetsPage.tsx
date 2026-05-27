@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, AlertTriangle, Target, Wallet, TrendingDown, Bell } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertTriangle, Target, Wallet, TrendingDown, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
@@ -7,10 +7,14 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageLoader } from '@/components/ui/Spinner';
 import { BudgetModal } from '@/components/modals/BudgetModal';
-import { useBudgets, useDeleteBudget } from '@/hooks/useBudgets';
+import { useBudgets, useDeleteBudget, useBudgetMonths } from '@/hooks/useBudgets';
 import { CategoryAvatar } from '@/utils/icons';
 import { Budget } from '@/types';
 import { formatCurrency, formatPercent } from '@/utils/format';
+
+const MONTH_NAMES = Array.from({ length: 12 }, (_, i) =>
+  new Date(2000, i).toLocaleString('pt-BR', { month: 'long' }),
+);
 
 interface StatCardProps {
   label: string;
@@ -49,6 +53,7 @@ export const BudgetsPage = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: budgets = [], isLoading } = useBudgets(month, year);
+  const { data: budgetMonths = [] } = useBudgetMonths();
   const deleteMutation = useDeleteBudget();
 
   const months = Array.from({ length: 12 }, (_, i) => ({
@@ -59,6 +64,18 @@ export const BudgetsPage = () => {
     value: now.getFullYear() + i - 1,
     label: String(now.getFullYear() + i - 1),
   }));
+
+  const stepMonth = (delta: number) => {
+    let m = month + delta;
+    let y = year;
+    if (m < 1) { m = 12; y -= 1; }
+    if (m > 12) { m = 1; y += 1; }
+    setMonth(m);
+    setYear(y);
+  };
+
+  // Outros meses que têm orçamento (exclui o que está sendo visto)
+  const otherMonths = budgetMonths.filter((bm) => !(bm.month === month && bm.year === year));
 
   const totalBudget = budgets.reduce((s, b) => s + b.amount, 0);
   const totalSpent = budgets.reduce((s, b) => s + b.spent, 0);
@@ -76,21 +93,65 @@ export const BudgetsPage = () => {
         </Button>
       </div>
 
-      {/* Month/year selector */}
-      <div className="flex items-center gap-3">
-        <Select
-          options={months}
-          value={month}
-          onChange={(e) => setMonth(Number(e.target.value))}
-          className="!w-40 capitalize"
-        />
-        <Select
-          options={years}
-          value={year}
-          onChange={(e) => setYear(Number(e.target.value))}
-          className="!w-28"
-        />
+      {/* Month navigator */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => stepMonth(-1)}
+          className="p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-primary-600 hover:border-primary-400 dark:hover:border-primary-500 transition-colors"
+          title="Mês anterior"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+
+        <div className="flex items-center gap-1.5">
+          <Select
+            options={months}
+            value={month}
+            onChange={(e) => setMonth(Number(e.target.value))}
+            className="!w-36 capitalize"
+          />
+          <Select
+            options={years}
+            value={year}
+            onChange={(e) => setYear(Number(e.target.value))}
+            className="!w-24"
+          />
+        </div>
+
+        <button
+          onClick={() => stepMonth(1)}
+          className="p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-primary-600 hover:border-primary-400 dark:hover:border-primary-500 transition-colors"
+          title="Próximo mês"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+
+        {(month !== now.getMonth() + 1 || year !== now.getFullYear()) && (
+          <button
+            onClick={() => { setMonth(now.getMonth() + 1); setYear(now.getFullYear()); }}
+            className="ml-1 text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline"
+          >
+            Hoje
+          </button>
+        )}
       </div>
+
+      {/* Atalhos para outros meses com orçamento */}
+      {otherMonths.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Outros meses:</span>
+          {otherMonths.map((bm) => (
+            <button
+              key={`${bm.year}-${bm.month}`}
+              onClick={() => { setMonth(bm.month); setYear(bm.year); }}
+              className="inline-flex items-center gap-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-700 dark:text-gray-300 px-2.5 py-1 rounded-lg transition-colors capitalize"
+            >
+              {MONTH_NAMES[bm.month - 1].slice(0, 3)}/{String(bm.year).slice(2)}
+              <span className="text-[10px] font-bold bg-gray-200 dark:bg-gray-700 text-gray-500 px-1.5 rounded">{bm.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Overview cards */}
       {budgets.length > 0 && (
@@ -108,9 +169,11 @@ export const BudgetsPage = () => {
         <Card>
           <EmptyState
             icon={Target}
-            title="Nenhum orçamento"
-            description="Crie orçamentos para controlar seus gastos por categoria"
-            action={{ label: 'Criar Orçamento', onClick: () => setModalOpen(true) }}
+            title={`Nenhum orçamento em ${MONTH_NAMES[month - 1]} de ${year}`}
+            description={otherMonths.length > 0
+              ? 'Crie um orçamento para este mês ou veja os de outros meses acima.'
+              : 'Crie orçamentos para controlar seus gastos por categoria'}
+            action={{ label: 'Criar Orçamento', onClick: () => { setEditingBudget(null); setModalOpen(true); } }}
           />
         </Card>
       ) : (
@@ -132,6 +195,7 @@ export const BudgetsPage = () => {
         budget={editingBudget}
         defaultMonth={month}
         defaultYear={year}
+        onSaved={(m, y) => { setMonth(m); setYear(y); }}
       />
 
       <ConfirmDialog

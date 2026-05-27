@@ -6,6 +6,7 @@ export const BUDGET_KEYS = {
   all: ['budgets'] as const,
   list: (month?: number, year?: number) => ['budgets', 'list', month, year] as const,
   alerts: ['budgets', 'alerts'] as const,
+  months: ['budgets', 'months'] as const,
 };
 
 export const useBudgets = (month?: number, year?: number) =>
@@ -16,6 +17,9 @@ export const useBudgets = (month?: number, year?: number) =>
 
 export const useBudgetAlerts = () =>
   useQuery({ queryKey: BUDGET_KEYS.alerts, queryFn: budgetService.getAlerts });
+
+export const useBudgetMonths = () =>
+  useQuery({ queryKey: BUDGET_KEYS.months, queryFn: budgetService.getMonths });
 
 export const useCreateBudget = () => {
   const qc = useQueryClient();

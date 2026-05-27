@@ -10,6 +10,7 @@ router.use(requireActiveSubscription);
 router.get('/', budgetController.findAll);
 router.post('/', budgetValidators.create, budgetController.create);
 router.get('/alerts', budgetController.getAlerts);
+router.get('/months', budgetController.listMonths);
 router.put('/:id', budgetValidators.update, budgetController.update);
 router.delete('/:id', budgetController.delete);
 

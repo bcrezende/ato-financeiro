@@ -58,6 +58,13 @@ export const budgetController = {
     } catch (e) { next(e); }
   },
 
+  listMonths: async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const months = await budgetService.listMonths(req.userId!);
+      res.json({ success: true, data: months });
+    } catch (e) { next(e); }
+  },
+
   getAlerts: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const alerts = await budgetService.getAlerts(req.userId!);

@@ -14,6 +14,7 @@ interface BudgetModalProps {
   budget?: Budget | null;
   defaultMonth?: number;
   defaultYear?: number;
+  onSaved?: (month: number, year: number) => void;
 }
 
 interface FormValues {
@@ -25,7 +26,7 @@ interface FormValues {
   alertAt: string;
 }
 
-export const BudgetModal = ({ open, onClose, budget, defaultMonth, defaultYear }: BudgetModalProps) => {
+export const BudgetModal = ({ open, onClose, budget, defaultMonth, defaultYear, onSaved }: BudgetModalProps) => {
   const { data: categories = [] } = useCategories();
   const createMutation = useCreateBudget();
   const updateMutation = useUpdateBudget();
@@ -83,6 +84,7 @@ export const BudgetModal = ({ open, onClose, budget, defaultMonth, defaultYear }
     } else {
       await createMutation.mutateAsync(payload);
     }
+    onSaved?.(payload.month, payload.year);
     onClose();
   };
 

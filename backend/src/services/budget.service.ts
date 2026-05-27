@@ -72,6 +72,17 @@ export const budgetService = {
     await prisma.budget.delete({ where: { id } });
   },
 
+  async listMonths(userId: string) {
+    const grouped = await prisma.budget.groupBy({
+      by: ['month', 'year'],
+      where: { userId },
+      _count: { _all: true },
+    });
+    return grouped
+      .map((g) => ({ month: g.month, year: g.year, count: g._count._all }))
+      .sort((a, b) => a.year - b.year || a.month - b.month);
+  },
+
   async getAlerts(userId: string) {
     const now = new Date();
     const budgets = await this.findAll(userId, now.getMonth() + 1, now.getFullYear());

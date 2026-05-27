@@ -16,4 +16,7 @@ export const budgetService = {
 
   getAlerts: () =>
     api.get('/budgets/alerts').then((r) => r.data.data as Budget[]),
+
+  getMonths: () =>
+    api.get('/budgets/months').then((r) => r.data.data as { month: number; year: number; count: number }[]),
 };

@@ -21,6 +21,7 @@ model User {
   subscriptionStatus   String    @default("TRIAL") @map("subscription_status")
   stripeCustomerId     String?   @unique @map("stripe_customer_id")
   stripeSubscriptionId String?   @map("stripe_subscription_id")
+  isBlocked            Boolean   @default(false) @map("is_blocked")
 
   transactions         Transaction[]
   categories           Category[]
@@ -30,6 +31,34 @@ model User {
   dreamItems           DreamItem[]
 
   @@map("users")
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  auditLogs AdminAuditLog[]
+
+  @@map("admins")
+}
+
+model AdminAuditLog {
+  id         String   @id @default(uuid())
+  adminId    String   @map("admin_id")
+  action     String
+  targetType String?  @map("target_type")
+  targetId   String?  @map("target_id")
+  metadata   String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@map("admin_audit_logs")
 }
 
 model DreamItem {

@@ -15,7 +15,7 @@ import { startTrialExpiryJob } from './jobs/trialExpiry';
 // Billing/CORS misconfig only warns — a Stripe config gap shouldn't take the
 // whole platform offline.
 function validateEnv() {
-  const critical = ['JWT_SECRET', 'JWT_REFRESH_SECRET'];
+  const critical = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'ADMIN_JWT_SECRET'];
   if (process.env.NODE_ENV === 'production') critical.push('DATABASE_URL');
   const missingCritical = critical.filter((k) => !process.env[k]);
   if (missingCritical.length) {

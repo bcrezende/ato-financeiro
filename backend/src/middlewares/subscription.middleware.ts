@@ -20,9 +20,11 @@ export const requireActiveSubscription = async (
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.userId! },
-      select: { subscriptionStatus: true, trialEndsAt: true },
+      select: { subscriptionStatus: true, trialEndsAt: true, isBlocked: true },
     });
     if (!user) throw new AppError('User not found', 404, 'NOT_FOUND');
+
+    if (user.isBlocked) throw new AppError('Conta suspensa.', 403, 'BLOCKED');
 
     let status = user.subscriptionStatus;
 

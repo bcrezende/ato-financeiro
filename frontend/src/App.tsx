@@ -15,6 +15,13 @@ import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { LandingPage } from '@/pages/LandingPage';
 import { useAuthStore } from '@/store/auth.store';
+import { AdminRoute } from '@/components/admin/AdminRoute';
+import { AdminLoginPage } from '@/pages/admin/AdminLoginPage';
+import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
+import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
+import { AdminUserDetailPage } from '@/pages/admin/AdminUserDetailPage';
+import { AdminsPage } from '@/pages/admin/AdminsPage';
+import { AuditLogPage } from '@/pages/admin/AuditLogPage';
 
 const HomeRoute = () => {
   const { isAuthenticated } = useAuthStore();
@@ -31,6 +38,16 @@ export default function App() {
       <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+      {/* Admin (isolado do app de usuário) */}
+      <Route path="/admin/login" element={<AdminLoginPage />} />
+      <Route element={<AdminRoute />}>
+        <Route path="/admin" element={<AdminDashboardPage />} />
+        <Route path="/admin/users" element={<AdminUsersPage />} />
+        <Route path="/admin/users/:id" element={<AdminUserDetailPage />} />
+        <Route path="/admin/admins" element={<AdminsPage />} />
+        <Route path="/admin/audit" element={<AuditLogPage />} />
+      </Route>
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/transactions" element={<TransactionsPage />} />

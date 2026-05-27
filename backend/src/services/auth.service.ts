@@ -33,6 +33,8 @@ export const authService = {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) throw new UnauthorizedError('Invalid credentials');
 
+    if (user.isBlocked) throw new UnauthorizedError('Conta suspensa. Entre em contato com o suporte.');
+
     const { accessToken, refreshToken } = await this.generateTokens(user.id, user.email);
     return {
       user: { id: user.id, email: user.email, name: user.name, subscriptionStatus: user.subscriptionStatus, trialEndsAt: user.trialEndsAt },

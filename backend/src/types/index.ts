@@ -12,6 +12,19 @@ export interface JwtPayload {
   exp?: number;
 }
 
+export interface AdminRequest extends Request {
+  adminId?: string;
+  admin?: { id: string; email: string };
+}
+
+export interface AdminJwtPayload {
+  adminId: string;
+  email: string;
+  role: 'ADMIN';
+  iat?: number;
+  exp?: number;
+}
+
 export interface PaginationQuery {
   page?: string;
   limit?: string;

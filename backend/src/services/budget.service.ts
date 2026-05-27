@@ -1,5 +1,5 @@
 import prisma from '../utils/prisma';
-import { NotFoundError, ForbiddenError, ConflictError } from '../utils/errors';
+import { NotFoundError, ForbiddenError } from '../utils/errors';
 
 export const budgetService = {
   async findAll(userId: string, month?: number, year?: number) {
@@ -35,20 +35,20 @@ export const budgetService = {
     });
     if (!category) throw new NotFoundError('Category');
 
-    const exists = await prisma.budget.findFirst({
-      where: { userId, categoryId: data.categoryId, month: data.month, year: data.year },
-    });
-    if (exists) throw new ConflictError('Budget for this category/month/year already exists');
-
-    const startDate = new Date(data.year, data.month - 1, 1);
-    const endDate = new Date(data.year, data.month, 0, 23, 59, 59);
-    const spent = await prisma.transaction.aggregate({
+    // Spent calculado a partir das despesas do mês (range em UTC, consistente com as datas ancoradas ao meio-dia UTC)
+    const startDate = new Date(Date.UTC(data.year, data.month - 1, 1, 0, 0, 0));
+    const endDate = new Date(Date.UTC(data.year, data.month, 1, 0, 0, 0) - 1);
+    const spentAgg = await prisma.transaction.aggregate({
       where: { userId, categoryId: data.categoryId, type: 'EXPENSE', date: { gte: startDate, lte: endDate } },
       _sum: { amount: true },
     });
+    const spent = spentAgg._sum.amount ?? 0;
 
-    return prisma.budget.create({
-      data: { ...data, userId, spent: spent._sum.amount ?? 0 },
+    // Upsert: se já existe orçamento para esta categoria/mês/ano, atualiza em vez de dar erro.
+    return prisma.budget.upsert({
+      where: { userId_categoryId_month_year: { userId, categoryId: data.categoryId, month: data.month, year: data.year } },
+      create: { ...data, userId, spent },
+      update: { name: data.name, amount: data.amount, alertAt: data.alertAt, spent },
       include: { category: { select: { id: true, name: true, color: true, icon: true } } },
     });
   },

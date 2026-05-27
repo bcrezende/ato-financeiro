@@ -3,6 +3,7 @@ import { Outlet, Navigate, Link } from 'react-router-dom';
 import { Zap } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { ProductTour } from '@/components/tour/ProductTour';
 import { useAuthStore } from '@/store/auth.store';
 import { useSubscriptionStatus } from '@/hooks/useSubscription';
 
@@ -34,6 +35,7 @@ export const AppLayout = () => {
 
   return (
     <div className="flex h-screen bg-gray-50/50 dark:bg-gray-950 overflow-hidden">
+      <ProductTour />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0">
         <Header

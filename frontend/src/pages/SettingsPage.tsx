@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, Globe, Crown, CreditCard, CheckCircle2, Clock, AlertTriangle, Trash2, ShieldAlert, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, Globe, Crown, CreditCard, CheckCircle2, Clock, AlertTriangle, Trash2, ShieldAlert, Eye, EyeOff, GraduationCap } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -9,7 +9,34 @@ import { Button } from '@/components/ui/Button';
 import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth.store';
 import { useSubscriptionStatus, useCheckout, useBillingPortal } from '@/hooks/useSubscription';
+import { useTourStore } from '@/store/tour.store';
 import toast from 'react-hot-toast';
+
+const TutorialCard = () => {
+  const navigate = useNavigate();
+  const { start } = useTourStore();
+  const replay = () => {
+    useTourStore.setState({ completed: false });
+    start();
+    navigate('/dashboard');
+  };
+  return (
+    <Card title="Tutorial" action={<GraduationCap className="w-5 h-5 text-gray-400" />}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Tour guiado</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Reveja a apresentação dos principais recursos da plataforma.
+          </p>
+        </div>
+        <Button variant="secondary" onClick={replay}>
+          <GraduationCap className="w-4 h-4 mr-2" />
+          Refazer tutorial
+        </Button>
+      </div>
+    </Card>
+  );
+};
 
 const CURRENCIES = [
   { value: 'BRL', label: 'Real Brasileiro (R$)' },
@@ -368,6 +395,9 @@ export const SettingsPage = () => {
 
       {/* Subscription */}
       <SubscriptionSection />
+
+      {/* Tutorial */}
+      <TutorialCard />
 
       {/* Danger Zone */}
       <DangerZone />

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Plus, TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight,
   AlertTriangle, Sparkles,
 } from 'lucide-react';
+import { useTourStore } from '@/store/tour.store';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge, TransactionBadge } from '@/components/ui/Badge';
@@ -113,6 +114,15 @@ export const DashboardPage = () => {
   const { data: byCategory } = useTransactionsByCategory();
   const { data: alerts = [] } = useBudgetAlerts();
 
+  // Auto-start the guided tour for first-time users, once the dashboard is painted
+  const { completed: tourCompleted, run: tourRunning, start: startTour } = useTourStore();
+  useEffect(() => {
+    if (!tourCompleted && !tourRunning && !loadingSummary && !loadingTx) {
+      const t = setTimeout(() => startTour(), 600);
+      return () => clearTimeout(t);
+    }
+  }, [tourCompleted, tourRunning, loadingSummary, loadingTx, startTour]);
+
   if (loadingSummary || loadingTx) return <PageLoader />;
 
   return (
@@ -143,6 +153,7 @@ export const DashboardPage = () => {
             </p>
           </div>
           <Button
+            data-tour="new-transaction"
             onClick={() => setModalOpen(true)}
             className="!bg-white !text-gray-900 hover:!bg-primary-50 dark:hover:!bg-primary-100 shadow-xl !text-sm whitespace-nowrap"
           >
@@ -170,7 +181,7 @@ export const DashboardPage = () => {
       )}
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="summary-cards">
         <SummaryCard label="Receitas do Mês" value={summary?.income ?? 0} icon={TrendingUp} intent="income" />
         <SummaryCard label="Despesas do Mês" value={summary?.expense ?? 0} icon={TrendingDown} intent="expense" />
         <SummaryCard label="Saldo do Mês" value={summary?.balance ?? 0} icon={Sparkles} intent="balance" />

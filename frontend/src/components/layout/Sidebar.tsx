@@ -92,7 +92,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => (
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-3 overflow-y-auto">
+      <nav className="flex-1 py-4 px-3 overflow-y-auto" data-tour="sidebar-nav">
         <p className="text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest px-3 mb-2">
           Menu
         </p>
@@ -100,6 +100,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => (
           <NavLink
             key={to}
             to={to}
+            data-tour={to === '/dream-board' ? 'nav-dream' : undefined}
             end={to === '/dashboard'}
             onClick={() => window.innerWidth < 1024 && onClose()}
             className={({ isActive }) =>
@@ -124,7 +125,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => (
       </nav>
 
       {/* Footer: install + subscription */}
-      <div className="border-t border-gray-200/60 dark:border-gray-800/60 pt-3">
+      <div className="border-t border-gray-200/60 dark:border-gray-800/60 pt-3" data-tour="subscription-cta">
         <InstallPWA />
         <SubscriptionCTA />
         <div className="px-6 pb-3">

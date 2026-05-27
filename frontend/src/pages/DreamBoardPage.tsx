@@ -1,21 +1,20 @@
-import { useState, useRef, useCallback } from 'react';
-import { Plus, Trash2, Sparkles, Upload, X } from 'lucide-react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { Plus, Trash2, Sparkles, Upload, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
+import { PageLoader } from '@/components/ui/Spinner';
+import { useDreams, useCreateDream, useDeleteDream } from '@/hooks/useDreams';
+import { compressFile, compressSrc } from '@/utils/image';
+import toast from 'react-hot-toast';
 
-interface DreamItem {
-  id: string;
-  base64: string;
-  title: string;
-  size: 'sm' | 'md' | 'lg' | 'wide' | 'tall';
-}
+type DreamSize = 'sm' | 'md' | 'lg' | 'wide' | 'tall';
 
-const STORAGE_KEY = 'ato-financeiro-dream-board';
+const LEGACY_KEY = 'ato-financeiro-dream-board';
 
-const SIZE_CYCLE: DreamItem['size'][] = ['wide', 'sm', 'tall', 'sm', 'md', 'lg', 'wide', 'sm', 'sm', 'tall', 'md', 'sm'];
+const SIZE_CYCLE: DreamSize[] = ['wide', 'sm', 'tall', 'sm', 'md', 'lg', 'wide', 'sm', 'sm', 'tall', 'md', 'sm'];
 
-const sizeClasses: Record<DreamItem['size'], string> = {
+const sizeClasses: Record<DreamSize, string> = {
   sm:   'col-span-1 row-span-1',
   md:   'col-span-1 row-span-2',
   lg:   'col-span-2 row-span-2',
@@ -23,29 +22,60 @@ const sizeClasses: Record<DreamItem['size'], string> = {
   tall: 'col-span-1 row-span-2',
 };
 
-function load(): DreamItem[] {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]'); } catch { return []; }
-}
-function save(items: DreamItem[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-}
-
 export const DreamBoardPage = () => {
-  const [items, setItems] = useState<DreamItem[]>(load);
+  const { data: dreams = [], isLoading } = useDreams();
+  const createDream = useCreateDream();
+  const deleteDream = useDeleteDream();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [dragging, setDragging] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const migratedRef = useRef(false);
 
-  const readFile = (file: File) => {
-    if (!file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreview(e.target?.result as string);
+  // One-time migration: rescue any images still living in localStorage and
+  // move them to the user's account (compressed), then clear the old key.
+  useEffect(() => {
+    if (migratedRef.current || isLoading) return;
+    migratedRef.current = true;
+    const raw = localStorage.getItem(LEGACY_KEY);
+    if (!raw) return;
+    (async () => {
+      try {
+        const old = JSON.parse(raw) as Array<{ base64?: string; title?: string; size?: string }>;
+        let migrated = 0;
+        for (const it of old) {
+          if (!it.base64) continue;
+          const imageData = await compressSrc(it.base64);
+          await createDream.mutateAsync({ imageData, title: it.title ?? '', size: it.size ?? 'sm' });
+          migrated++;
+        }
+        localStorage.removeItem(LEGACY_KEY);
+        if (migrated > 0) toast.success(`${migrated} sonho(s) migrado(s) para sua conta!`);
+      } catch {
+        // best-effort; leave localStorage intact if it fails
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
+
+  const readFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Selecione um arquivo de imagem');
+      return;
+    }
+    setProcessing(true);
+    try {
+      const compressed = await compressFile(file);
+      setPreview(compressed);
       setModalOpen(true);
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      toast.error('Não foi possível processar a imagem');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const onDrop = useCallback((e: React.DragEvent) => {
@@ -55,26 +85,26 @@ export const DreamBoardPage = () => {
     if (file) readFile(file);
   }, []);
 
-  const addItem = () => {
+  const addItem = async () => {
     if (!preview) return;
-    const newItem: DreamItem = {
-      id: crypto.randomUUID(),
-      base64: preview,
-      title: title.trim(),
-      size: SIZE_CYCLE[items.length % SIZE_CYCLE.length],
-    };
-    const updated = [...items, newItem];
-    setItems(updated);
-    save(updated);
-    setPreview(null);
-    setTitle('');
-    setModalOpen(false);
+    try {
+      await createDream.mutateAsync({
+        imageData: preview,
+        title: title.trim(),
+        size: SIZE_CYCLE[dreams.length % SIZE_CYCLE.length],
+      });
+      setPreview(null);
+      setTitle('');
+      setModalOpen(false);
+    } catch {
+      toast.error('Erro ao salvar. Tente novamente.');
+    }
   };
 
   const removeItem = (id: string) => {
-    const updated = items.filter((i) => i.id !== id);
-    setItems(updated);
-    save(updated);
+    deleteDream.mutate(id, {
+      onError: () => toast.error('Erro ao remover'),
+    });
   };
 
   const closeModal = () => {
@@ -82,6 +112,8 @@ export const DreamBoardPage = () => {
     setPreview(null);
     setTitle('');
   };
+
+  if (isLoading) return <PageLoader />;
 
   return (
     <div className="space-y-6 animate-fade-in pb-6">
@@ -103,6 +135,7 @@ export const DreamBoardPage = () => {
           </div>
           <Button
             onClick={() => fileRef.current?.click()}
+            loading={processing}
             className="!bg-white !text-amber-700 hover:!bg-amber-50 shadow-xl whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
@@ -118,7 +151,7 @@ export const DreamBoardPage = () => {
         />
       </div>
 
-      {items.length === 0 ? (
+      {dreams.length === 0 ? (
         /* Empty state — drop zone */
         <div
           onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -161,13 +194,13 @@ export const DreamBoardPage = () => {
             ${dragging ? 'ring-2 ring-amber-400 ring-offset-2' : ''}
           `}
         >
-          {items.map((item) => (
+          {dreams.map((item) => (
             <div
               key={item.id}
-              className={`${sizeClasses[item.size]} relative group rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-700 shadow-sm hover:shadow-lg transition-shadow`}
+              className={`${sizeClasses[(item.size as DreamSize) ?? 'sm'] ?? sizeClasses.sm} relative group rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-700 shadow-sm hover:shadow-lg transition-shadow`}
             >
               <img
-                src={item.base64}
+                src={item.imageData}
                 alt={item.title || 'Sonho'}
                 className="w-full h-full object-cover"
               />
@@ -190,13 +223,16 @@ export const DreamBoardPage = () => {
           ))}
 
           {/* Always-visible add tile */}
-          <div
+          <button
             onClick={() => fileRef.current?.click()}
-            className="col-span-1 row-span-1 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors"
+            disabled={processing}
+            className="col-span-1 row-span-1 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors disabled:opacity-50"
           >
-            <Plus className="w-7 h-7 text-gray-400 group-hover:text-amber-500" />
+            {processing
+              ? <Loader2 className="w-7 h-7 text-amber-500 animate-spin" />
+              : <Plus className="w-7 h-7 text-gray-400" />}
             <span className="text-xs text-gray-400">Adicionar</span>
-          </div>
+          </button>
         </div>
       )}
 
@@ -234,7 +270,7 @@ export const DreamBoardPage = () => {
 
           <div className="flex justify-end gap-3">
             <Button variant="secondary" type="button" onClick={closeModal}>Cancelar</Button>
-            <Button onClick={addItem} disabled={!preview}>
+            <Button onClick={addItem} disabled={!preview} loading={createDream.isPending}>
               Adicionar ao Quadro
             </Button>
           </div>

@@ -27,8 +27,23 @@ model User {
   budgets              Budget[]
   refreshTokens        RefreshToken[]
   passwordResetTokens  PasswordResetToken[]
+  dreamItems           DreamItem[]
 
   @@map("users")
+}
+
+model DreamItem {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  imageData String   @map("image_data") // compressed base64 data URL
+  title     String   @default("")
+  size      String   @default("sm")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("dream_items")
 }
 
 model RefreshToken {

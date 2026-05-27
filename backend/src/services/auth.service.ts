@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import prisma from '../utils/prisma';
 import { ConflictError, UnauthorizedError, NotFoundError } from '../utils/errors';
 import { emailService } from './email.service';
+import { normalizePhone } from '../utils/phone';
 import { JwtPayload } from '../types';
 
 const SALT_ROUNDS = 12;
@@ -80,18 +81,29 @@ export const authService = {
   async getProfile(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, name: true, avatarUrl: true, currency: true, locale: true, subscriptionStatus: true, trialEndsAt: true, createdAt: true },
+      select: { id: true, email: true, name: true, avatarUrl: true, currency: true, locale: true, phone: true, subscriptionStatus: true, trialEndsAt: true, createdAt: true },
     });
     if (!user) throw new NotFoundError('User');
     return user;
   },
 
-  async updateProfile(userId: string, data: { name?: string; currency?: string; locale?: string }) {
-    return prisma.user.update({
-      where: { id: userId },
-      data,
-      select: { id: true, email: true, name: true, currency: true, locale: true },
-    });
+  async updateProfile(userId: string, data: { name?: string; currency?: string; locale?: string; phone?: string | null }) {
+    const update: any = {};
+    if (data.name !== undefined) update.name = data.name;
+    if (data.currency !== undefined) update.currency = data.currency;
+    if (data.locale !== undefined) update.locale = data.locale;
+    if (data.phone !== undefined) update.phone = normalizePhone(data.phone);
+
+    try {
+      return await prisma.user.update({
+        where: { id: userId },
+        data: update,
+        select: { id: true, email: true, name: true, currency: true, locale: true, phone: true },
+      });
+    } catch (e: any) {
+      if (e.code === 'P2002') throw new ConflictError('Este telefone já está cadastrado em outra conta');
+      throw e;
+    }
   },
 
   async changePassword(userId: string, currentPassword: string, newPassword: string) {

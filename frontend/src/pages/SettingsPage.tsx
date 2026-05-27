@@ -284,7 +284,7 @@ export const SettingsPage = () => {
   const [pwdLoading, setPwdLoading] = useState(false);
 
   const profileForm = useForm({
-    defaultValues: { name: user?.name ?? '', currency: user?.currency ?? 'BRL', locale: user?.locale ?? 'pt-BR' },
+    defaultValues: { name: user?.name ?? '', currency: user?.currency ?? 'BRL', locale: user?.locale ?? 'pt-BR', phone: user?.phone ?? '' },
   });
 
   const pwdForm = useForm<{ currentPassword: string; newPassword: string; confirmPassword: string }>();
@@ -330,6 +330,13 @@ export const SettingsPage = () => {
             label="Nome"
             {...profileForm.register('name', { required: true, minLength: 2 })}
             error={profileForm.formState.errors.name ? 'Nome obrigatório (mín. 2 caracteres)' : undefined}
+          />
+          <Input
+            label="WhatsApp"
+            type="tel"
+            placeholder="(47) 99999-8888"
+            hint="Cadastre seu número para registrar gastos pelo WhatsApp. Use o mesmo número do seu WhatsApp."
+            {...profileForm.register('phone')}
           />
           <div className="grid grid-cols-2 gap-4">
             <Select label="Moeda" options={CURRENCIES} {...profileForm.register('currency')} />

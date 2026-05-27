@@ -15,6 +15,7 @@ model User {
   avatarUrl    String?  @map("avatar_url")
   currency     String   @default("BRL")
   locale       String   @default("pt-BR")
+  phone        String?  @unique
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @updatedAt @map("updated_at")
   trialEndsAt          DateTime? @map("trial_ends_at")

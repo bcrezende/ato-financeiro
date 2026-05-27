@@ -23,7 +23,7 @@ function validateEnv() {
   }
 
   if (process.env.NODE_ENV === 'production') {
-    const warn = ['FRONTEND_URL', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'];
+    const warn = ['FRONTEND_URL', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'INTEGRATION_API_KEY'];
     const missingWarn = warn.filter((k) => !process.env[k]);
     if (missingWarn.length) {
       logger.warn(`Missing optional env vars (some features may not work): ${missingWarn.join(', ')}`);

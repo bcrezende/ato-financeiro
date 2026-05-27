@@ -14,7 +14,7 @@ export const authService = {
   getProfile: () =>
     api.get('/auth/profile').then((r) => r.data.data as User),
 
-  updateProfile: (data: { name?: string; currency?: string; locale?: string }) =>
+  updateProfile: (data: { name?: string; currency?: string; locale?: string; phone?: string | null }) =>
     api.put('/auth/profile', data).then((r) => r.data.data as User),
 
   changePassword: (data: { currentPassword: string; newPassword: string }) =>

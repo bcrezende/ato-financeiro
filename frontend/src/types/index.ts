@@ -9,6 +9,7 @@ export interface User {
   avatarUrl?: string;
   currency: string;
   locale: string;
+  phone?: string | null;
   createdAt: string;
   subscriptionStatus?: 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'EXPIRED';
   trialEndsAt?: string | null;

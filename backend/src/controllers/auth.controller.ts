@@ -38,6 +38,7 @@ export const authValidators = {
     body('name').optional().trim().isLength({ min: 2, max: 100 }).withMessage('Name must be 2-100 characters'),
     body('currency').optional().isIn(['BRL', 'USD', 'EUR']).withMessage('Invalid currency'),
     body('locale').optional().isIn(['pt-BR', 'en-US', 'es-ES']).withMessage('Invalid locale'),
+    body('phone').optional({ nullable: true }).isString().isLength({ max: 20 }).withMessage('Telefone inválido'),
     validate,
   ],
 };
@@ -85,8 +86,8 @@ export const authController = {
 
   updateProfile: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const { name, currency, locale } = req.body;
-      const user = await authService.updateProfile(req.userId!, { name, currency, locale });
+      const { name, currency, locale, phone } = req.body;
+      const user = await authService.updateProfile(req.userId!, { name, currency, locale, phone });
       res.json({ success: true, data: user });
     } catch (e) { next(e); }
   },

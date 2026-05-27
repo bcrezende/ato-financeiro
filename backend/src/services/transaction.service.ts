@@ -47,7 +47,7 @@ export const transactionService = {
         for (const t of created) {
           const d = new Date(t.date);
           await prisma.budget.updateMany({
-            where: { userId, categoryId: data.categoryId, month: d.getMonth() + 1, year: d.getFullYear() },
+            where: { userId, categoryId: data.categoryId, month: d.getUTCMonth() + 1, year: d.getUTCFullYear() },
             data: { spent: { increment: data.amount } },
           });
         }
@@ -64,7 +64,7 @@ export const transactionService = {
     if (data.type === 'EXPENSE') {
       const d = new Date(data.date);
       await prisma.budget.updateMany({
-        where: { userId, categoryId: data.categoryId, month: d.getMonth() + 1, year: d.getFullYear() },
+        where: { userId, categoryId: data.categoryId, month: d.getUTCMonth() + 1, year: d.getUTCFullYear() },
         data: { spent: { increment: data.amount } },
       });
     }
@@ -75,8 +75,9 @@ export const transactionService = {
   async findAll(userId: string, filters: TransactionFilters, page = DEFAULT_PAGE, limit = DEFAULT_LIMIT) {
     const where: any = { userId };
 
-    if (filters.startDate) where.date = { ...((where.date) || {}), gte: new Date(filters.startDate) };
-    if (filters.endDate) where.date = { ...((where.date) || {}), lte: new Date(filters.endDate) };
+    if (filters.startDate) where.date = { ...((where.date) || {}), gte: new Date(`${filters.startDate}T00:00:00.000Z`) };
+    // endDate inclusivo: cobre o dia inteiro em UTC (transações são ancoradas ao meio-dia UTC)
+    if (filters.endDate) where.date = { ...((where.date) || {}), lte: new Date(`${filters.endDate}T23:59:59.999Z`) };
     if (filters.categoryId) where.categoryId = filters.categoryId;
     if (filters.type) where.type = filters.type;
     if (filters.minAmount || filters.maxAmount) {
@@ -122,7 +123,7 @@ export const transactionService = {
     if (existing.type === 'EXPENSE') {
       const d = new Date(existing.date);
       await prisma.budget.updateMany({
-        where: { userId, categoryId: existing.categoryId, month: d.getMonth() + 1, year: d.getFullYear() },
+        where: { userId, categoryId: existing.categoryId, month: d.getUTCMonth() + 1, year: d.getUTCFullYear() },
         data: { spent: { decrement: existing.amount } },
       });
     }
@@ -147,7 +148,7 @@ export const transactionService = {
     if (newType === 'EXPENSE') {
       const d = new Date(newDate);
       await prisma.budget.updateMany({
-        where: { userId, categoryId: newCategoryId, month: d.getMonth() + 1, year: d.getFullYear() },
+        where: { userId, categoryId: newCategoryId, month: d.getUTCMonth() + 1, year: d.getUTCFullYear() },
         data: { spent: { increment: newAmount } },
       });
     }
@@ -161,7 +162,7 @@ export const transactionService = {
     if (t.type === 'EXPENSE') {
       const d = new Date(t.date);
       await prisma.budget.updateMany({
-        where: { userId, categoryId: t.categoryId, month: d.getMonth() + 1, year: d.getFullYear() },
+        where: { userId, categoryId: t.categoryId, month: d.getUTCMonth() + 1, year: d.getUTCFullYear() },
         data: { spent: { decrement: t.amount } },
       });
     }
@@ -170,8 +171,8 @@ export const transactionService = {
   },
 
   async getSummary(userId: string, month: number, year: number) {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59);
+    const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
+    const endDate = new Date(Date.UTC(year, month, 1, 0, 0, 0) - 1); // último instante do mês em UTC
 
     const [incomeAgg, expenseAgg, paidIncomeAgg, paidExpenseAgg] = await Promise.all([
       prisma.transaction.aggregate({
@@ -235,10 +236,10 @@ export const transactionService = {
 function advanceDate(date: Date, frequency: string, count: number): Date {
   const d = new Date(date);
   switch (frequency) {
-    case 'DAILY':   d.setDate(d.getDate() + count); break;
-    case 'WEEKLY':  d.setDate(d.getDate() + count * 7); break;
-    case 'MONTHLY': d.setMonth(d.getMonth() + count); break;
-    case 'YEARLY':  d.setFullYear(d.getFullYear() + count); break;
+    case 'DAILY':   d.setUTCDate(d.getUTCDate() + count); break;
+    case 'WEEKLY':  d.setUTCDate(d.getUTCDate() + count * 7); break;
+    case 'MONTHLY': d.setUTCMonth(d.getUTCMonth() + count); break;
+    case 'YEARLY':  d.setUTCFullYear(d.getUTCFullYear() + count); break;
   }
   return d;
 }

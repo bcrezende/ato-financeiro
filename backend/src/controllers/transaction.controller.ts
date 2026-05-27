@@ -86,8 +86,12 @@ export const transactionController = {
   getByCategory: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const now = new Date();
-      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : new Date(now.getFullYear(), now.getMonth(), 1);
-      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const startDate = req.query.startDate
+        ? new Date(`${req.query.startDate}T00:00:00.000Z`)
+        : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0));
+      const endDate = req.query.endDate
+        ? new Date(`${req.query.endDate}T23:59:59.999Z`)
+        : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0) - 1);
       const data = await transactionService.getByCategory(req.userId!, startDate, endDate);
       res.json({ success: true, data });
     } catch (e) { next(e); }

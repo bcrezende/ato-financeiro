@@ -9,7 +9,8 @@ import { CategoryModal } from '@/components/modals/CategoryModal';
 import { useCategories } from '@/hooks/useCategories';
 import { useCreateTransaction, useUpdateTransaction } from '@/hooks/useTransactions';
 import { Transaction } from '@/types';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
+import { toDateInput } from '@/utils/format';
 
 interface TransactionModalProps {
   open: boolean;
@@ -58,7 +59,7 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
         description: transaction.description,
         amount: String(transaction.amount),
         type: transaction.type,
-        date: format(parseISO(transaction.date), 'yyyy-MM-dd'),
+        date: toDateInput(transaction.date),
         categoryId: transaction.categoryId,
         notes: transaction.notes ?? '',
         isRecurring: transaction.isRecurring,
@@ -93,7 +94,7 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
       description: data.description,
       amount: parseFloat(data.amount),
       type: data.type,
-      date: new Date(data.date).toISOString(),
+      date: `${data.date}T12:00:00.000Z`,
       categoryId: data.categoryId,
       notes: data.notes || undefined,
       isRecurring: data.isRecurring,

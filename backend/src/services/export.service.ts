@@ -25,7 +25,7 @@ export const exportService = {
 
     data.forEach((t: any) => {
       const row = sheet.addRow({
-        date: new Date(t.date).toLocaleDateString('pt-BR'),
+        date: new Date(t.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
         description: t.description,
         type: t.type === 'INCOME' ? 'Receita' : 'Despesa',
         category: t.category?.name ?? '',
@@ -47,7 +47,7 @@ export const exportService = {
     const header = 'Data,Descrição,Tipo,Categoria,Valor,Notas\n';
     const rows = data.map((t: any) =>
       [
-        new Date(t.date).toLocaleDateString('pt-BR'),
+        new Date(t.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
         `"${t.description.replace(/"/g, '""')}"`,
         t.type === 'INCOME' ? 'Receita' : 'Despesa',
         `"${t.category?.name ?? ''}"`,

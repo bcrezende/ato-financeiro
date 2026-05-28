@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageLoader } from '@/components/ui/Spinner';
 import { TransactionModal } from '@/components/modals/TransactionModal';
+import { RecurringDeleteDialog } from '@/components/modals/RecurringDeleteDialog';
 import { useTransactions, useDeleteTransaction, useExportTransactions, useUpdateTransaction } from '@/hooks/useTransactions';
 import { CategoryAvatar } from '@/utils/icons';
 import { useCategories } from '@/hooks/useCategories';
@@ -19,7 +20,7 @@ export const TransactionsPage = () => {
   const [filters, setFilters] = useState<TransactionFilters>({ page: 1, limit: 20 });
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingTx, setDeletingTx] = useState<Transaction | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
   const { data, isLoading } = useTransactions(filters);
@@ -171,7 +172,7 @@ export const TransactionsPage = () => {
                     <button onClick={() => { setEditingTx(t); setModalOpen(true); }} className="p-1.5 text-gray-400 hover:text-primary-600">
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => setDeletingId(t.id)} className="p-1.5 text-gray-400 hover:text-red-600">
+                    <button onClick={() => setDeletingTx(t)} className="p-1.5 text-gray-400 hover:text-red-600">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -240,7 +241,7 @@ export const TransactionsPage = () => {
                           <button onClick={() => { setEditingTx(t); setModalOpen(true); }} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-primary-600 transition-colors">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => setDeletingId(t.id)} className="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 text-gray-400 hover:text-rose-600 transition-colors">
+                          <button onClick={() => setDeletingTx(t)} className="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 text-gray-400 hover:text-rose-600 transition-colors">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -287,14 +288,32 @@ export const TransactionsPage = () => {
         transaction={editingTx}
       />
 
+      {/* Confirmação simples para transação avulsa */}
       <ConfirmDialog
-        open={!!deletingId}
-        onClose={() => setDeletingId(null)}
-        onConfirm={async () => { await deleteMutation.mutateAsync(deletingId!); setDeletingId(null); }}
+        open={!!deletingTx && !deletingTx.recurringId}
+        onClose={() => setDeletingTx(null)}
+        onConfirm={async () => {
+          await deleteMutation.mutateAsync({ id: deletingTx!.id });
+          setDeletingTx(null);
+        }}
         loading={deleteMutation.isPending}
         title="Remover transação"
         description="Esta ação não pode ser desfeita. A transação será permanentemente removida."
         confirmLabel="Remover"
+      />
+
+      {/* Diálogo com escopo para transação recorrente */}
+      <RecurringDeleteDialog
+        open={!!deletingTx && !!deletingTx?.recurringId}
+        onClose={() => setDeletingTx(null)}
+        onConfirm={async (scope) => {
+          await deleteMutation.mutateAsync({ id: deletingTx!.id, scope });
+          setDeletingTx(null);
+        }}
+        loading={deleteMutation.isPending}
+        description={deletingTx?.description ?? ''}
+        installmentNumber={deletingTx?.installmentNumber ?? undefined}
+        installments={deletingTx?.installments ?? undefined}
       />
     </div>
   );

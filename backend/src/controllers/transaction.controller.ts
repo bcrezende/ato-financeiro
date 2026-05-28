@@ -61,14 +61,22 @@ export const transactionController = {
       const data = { ...req.body };
       if (data.amount) data.amount = Number(data.amount);
       if (data.date) data.date = new Date(data.date);
-      const t = await transactionService.update(req.userId!, req.params.id, data);
+      const scope = req.query.scope as 'this' | 'future' | 'all' | undefined;
+      const t = (scope === 'future' || scope === 'all')
+        ? await transactionService.updateScope(req.userId!, req.params.id, scope, data)
+        : await transactionService.update(req.userId!, req.params.id, data);
       res.json({ success: true, data: t });
     } catch (e) { next(e); }
   },
 
   delete: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      await transactionService.delete(req.userId!, req.params.id);
+      const scope = req.query.scope as 'this' | 'future' | 'all' | undefined;
+      if (scope === 'future' || scope === 'all') {
+        await transactionService.deleteScope(req.userId!, req.params.id, scope);
+      } else {
+        await transactionService.delete(req.userId!, req.params.id);
+      }
       res.json({ success: true, message: 'Transaction deleted' });
     } catch (e) { next(e); }
   },

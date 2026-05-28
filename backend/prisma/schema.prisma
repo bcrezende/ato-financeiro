@@ -30,8 +30,63 @@ model User {
   refreshTokens        RefreshToken[]
   passwordResetTokens  PasswordResetToken[]
   dreamItems           DreamItem[]
+  goals                Goal[]
 
   @@map("users")
+}
+
+model Goal {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  title       String
+  description String?
+  /// FINANCIAL | OTHER
+  type        String
+  targetValue Float?    @map("target_value")
+  targetDate  DateTime? @map("target_date")
+  color       String    @default("#6366f1")
+  icon        String    @default("target")
+  /// ACTIVE | COMPLETED | ARCHIVED
+  status      String    @default("ACTIVE")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  steps         GoalStep[]
+  contributions GoalContribution[]
+
+  @@index([userId])
+  @@map("goals")
+}
+
+model GoalStep {
+  id          String    @id @default(uuid())
+  goalId      String    @map("goal_id")
+  title       String
+  isDone      Boolean   @default(false) @map("is_done")
+  completedAt DateTime? @map("completed_at")
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@index([goalId])
+  @@map("goal_steps")
+}
+
+model GoalContribution {
+  id        String   @id @default(uuid())
+  goalId    String   @map("goal_id")
+  amount    Float
+  note      String?
+  date      DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@index([goalId])
+  @@map("goal_contributions")
 }
 
 model Admin {

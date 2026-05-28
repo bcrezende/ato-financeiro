@@ -8,6 +8,7 @@ import webhookRoutes from './webhook.routes';
 import dreamRoutes from './dream.routes';
 import adminRoutes from './admin.routes';
 import integrationRoutes from './integration.routes';
+import goalRoutes from './goal.routes';
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use('/subscription', subscriptionRoutes);
 router.use('/webhooks', webhookRoutes);
 router.use('/admin', adminRoutes);
 router.use('/integrations', integrationRoutes);
+router.use('/goals', goalRoutes);
 
 export default router;

@@ -238,6 +238,7 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
             <div className="px-3 pb-3 flex gap-3 border-t border-gray-200 dark:border-gray-600 pt-3">
               <Select
                 label="Frequência"
+                required
                 options={[
                   { value: 'DAILY', label: 'Diário' },
                   { value: 'WEEKLY', label: 'Semanal' },
@@ -246,7 +247,10 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
                 ]}
                 placeholder="Selecionar"
                 className="flex-1"
-                {...register('frequency')}
+                error={errors.frequency?.message}
+                {...register('frequency', {
+                  validate: (v) => !watchRecurring || !!v || 'Selecione a frequência da recorrência',
+                })}
               />
               <Input
                 label="Parcelas"

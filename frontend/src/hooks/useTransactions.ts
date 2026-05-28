@@ -9,8 +9,16 @@ export const TRANSACTION_KEYS = {
   detail: (id: string) => ['transactions', id] as const,
   summary: (month?: number, year?: number) => ['transactions', 'summary', month, year] as const,
   byCategory: (start?: string, end?: string) => ['transactions', 'byCategory', start, end] as const,
-  evolution: (months?: number) => ['transactions', 'evolution', months] as const,
+  evolution: (opts?: object) => ['transactions', 'evolution', opts] as const,
 };
+
+export interface EvolutionOpts {
+  months?: number;
+  fromMonth?: number;
+  fromYear?: number;
+  toMonth?: number;
+  toYear?: number;
+}
 
 export const useTransactions = (filters: TransactionFilters = {}) =>
   useQuery({
@@ -31,11 +39,13 @@ export const useTransactionsByCategory = (startDate?: string, endDate?: string) 
     queryFn: () => transactionService.getByCategory(startDate, endDate),
   });
 
-export const useMonthlyEvolution = (months = 12) =>
-  useQuery({
-    queryKey: TRANSACTION_KEYS.evolution(months),
-    queryFn: () => transactionService.getMonthlyEvolution(months),
+export const useMonthlyEvolution = (opts: EvolutionOpts | number = 12) => {
+  const params: EvolutionOpts = typeof opts === 'number' ? { months: opts } : opts;
+  return useQuery({
+    queryKey: TRANSACTION_KEYS.evolution(params),
+    queryFn: () => transactionService.getMonthlyEvolution(params),
   });
+};
 
 export const useCreateTransaction = () => {
   const qc = useQueryClient();
@@ -78,6 +88,18 @@ export const useDeleteTransaction = () => {
       toast.success(msg);
     },
     onError: () => toast.error('Erro ao remover transação'),
+  });
+};
+
+export const useGenerateNextTransaction = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => transactionService.generateNext(id),
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: TRANSACTION_KEYS.all });
+      toast.success(result.alreadyExisted ? 'A próxima parcela já existia.' : 'Próxima parcela gerada!');
+    },
+    onError: () => toast.error('Erro ao gerar próxima parcela'),
   });
 };
 

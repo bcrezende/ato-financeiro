@@ -14,8 +14,10 @@ router.get('/by-category', transactionController.getByCategory);
 router.get('/monthly-evolution', transactionController.getMonthlyEvolution);
 router.get('/export/excel', transactionController.exportExcel);
 router.get('/export/csv', transactionController.exportCsv);
+router.post('/report', transactionController.generateReport);
 router.get('/:id', transactionController.findById);
 router.put('/:id', transactionValidators.update, transactionController.update);
+router.post('/:id/generate-next', transactionController.generateNext);
 router.delete('/:id', transactionController.delete);
 
 export default router;

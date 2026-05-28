@@ -129,7 +129,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => (
         <InstallPWA />
         <SubscriptionCTA />
         <div className="px-6 pb-3">
-          <p className="text-[10px] text-gray-400 dark:text-gray-600 font-medium">v1.0.0</p>
+          <p className="text-[10px] text-gray-400 dark:text-gray-600 font-medium">v{__APP_VERSION__}</p>
         </div>
       </div>
     </aside>

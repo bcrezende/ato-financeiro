@@ -156,6 +156,102 @@ export const transactionService = {
     return updated;
   },
 
+  /**
+   * Recomputa `budget.spent` para um mês/categoria do zero, baseado nas
+   * despesas existentes. Usado após operações em lote, onde calcular o delta
+   * incremental seria frágil.
+   */
+  async recomputeBudgetSpent(userId: string, categoryId: string, month: number, year: number) {
+    const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
+    const endDate = new Date(Date.UTC(year, month, 1, 0, 0, 0) - 1);
+    const agg = await prisma.transaction.aggregate({
+      where: { userId, categoryId, type: 'EXPENSE', date: { gte: startDate, lte: endDate } },
+      _sum: { amount: true },
+    });
+    await prisma.budget.updateMany({
+      where: { userId, categoryId, month, year },
+      data: { spent: agg._sum.amount ?? 0 },
+    });
+  },
+
+  /** Bulk update por série recorrente. scope: 'future' (>= date desta) ou 'all'. */
+  async updateScope(userId: string, id: string, scope: 'future' | 'all', data: Record<string, any>) {
+    const anchor = await this.findById(userId, id);
+    if (!anchor.recurringId) {
+      // não é série — degrada para update normal
+      return this.update(userId, id, data);
+    }
+
+    // Allowlist: campos que fazem sentido em lote
+    const allowed: Record<string, any> = {};
+    for (const key of ['description', 'amount', 'categoryId', 'status', 'notes']) {
+      if (data[key] !== undefined) allowed[key] = data[key];
+    }
+
+    const where: any = { userId, recurringId: anchor.recurringId };
+    if (scope === 'future') where.date = { gte: anchor.date };
+
+    // Captura buckets ANTES para recálculo (categoria/mês antigos)
+    const rowsBefore = await prisma.transaction.findMany({
+      where, select: { categoryId: true, date: true, type: true },
+    });
+
+    if (allowed.categoryId !== undefined) {
+      // valida ownership da nova categoria
+      const cat = await prisma.category.findFirst({
+        where: { id: allowed.categoryId, OR: [{ userId }, { isDefault: true }] },
+      });
+      if (!cat) throw new NotFoundError('Category');
+    }
+
+    await prisma.transaction.updateMany({ where, data: allowed });
+
+    // Buckets afetados (categoria antiga + nova) × cada mês envolvido
+    const buckets = new Set<string>();
+    for (const r of rowsBefore) {
+      const d = new Date(r.date);
+      buckets.add(`${r.categoryId}|${d.getUTCMonth() + 1}|${d.getUTCFullYear()}`);
+      if (allowed.categoryId && allowed.categoryId !== r.categoryId) {
+        buckets.add(`${allowed.categoryId}|${d.getUTCMonth() + 1}|${d.getUTCFullYear()}`);
+      }
+    }
+    for (const k of buckets) {
+      const [categoryId, m, y] = k.split('|');
+      await this.recomputeBudgetSpent(userId, categoryId, parseInt(m), parseInt(y));
+    }
+
+    return this.findById(userId, id);
+  },
+
+  /** Bulk delete por série recorrente. scope: 'future' (>= date desta) ou 'all'. */
+  async deleteScope(userId: string, id: string, scope: 'future' | 'all') {
+    const anchor = await this.findById(userId, id);
+    if (!anchor.recurringId) {
+      // não é série — degrada para delete normal
+      return this.delete(userId, id);
+    }
+
+    const where: any = { userId, recurringId: anchor.recurringId };
+    if (scope === 'future') where.date = { gte: anchor.date };
+
+    const rows = await prisma.transaction.findMany({
+      where, select: { categoryId: true, date: true, type: true },
+    });
+
+    await prisma.transaction.deleteMany({ where });
+
+    const buckets = new Set<string>();
+    for (const r of rows) {
+      if (r.type !== 'EXPENSE') continue;
+      const d = new Date(r.date);
+      buckets.add(`${r.categoryId}|${d.getUTCMonth() + 1}|${d.getUTCFullYear()}`);
+    }
+    for (const k of buckets) {
+      const [categoryId, m, y] = k.split('|');
+      await this.recomputeBudgetSpent(userId, categoryId, parseInt(m), parseInt(y));
+    }
+  },
+
   async delete(userId: string, id: string) {
     const t = await this.findById(userId, id);
 

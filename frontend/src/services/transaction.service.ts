@@ -14,11 +14,12 @@ export const transactionService = {
   create: (data: Omit<Transaction, 'id' | 'category' | 'createdAt'> & { categoryId: string }) =>
     api.post('/transactions', data).then((r) => r.data.data as Transaction),
 
-  update: (id: string, data: Partial<Transaction>) =>
-    api.put(`/transactions/${id}`, data).then((r) => r.data.data as Transaction),
+  update: (id: string, data: Partial<Transaction>, scope?: 'this' | 'future' | 'all') =>
+    api.put(`/transactions/${id}`, data, { params: scope && scope !== 'this' ? { scope } : undefined })
+      .then((r) => r.data.data as Transaction),
 
-  delete: (id: string) =>
-    api.delete(`/transactions/${id}`),
+  delete: (id: string, scope?: 'this' | 'future' | 'all') =>
+    api.delete(`/transactions/${id}`, { params: scope && scope !== 'this' ? { scope } : undefined }),
 
   getSummary: (month?: number, year?: number) =>
     api.get('/transactions/summary', { params: { month, year } }).then((r) => r.data.data as MonthlySummary),

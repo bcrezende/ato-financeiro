@@ -40,6 +40,8 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const prevCategoryIdsRef = useRef<Set<string>>(new Set());
   const [awaitingNewCategory, setAwaitingNewCategory] = useState(false);
+  const [editScope, setEditScope] = useState<'this' | 'future' | 'all'>('this');
+  const isRecurringEdit = isEditing && !!transaction?.recurringId;
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<FormValues>({
     defaultValues: {
@@ -52,6 +54,8 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
 
   const watchType = watch('type');
   const watchRecurring = watch('isRecurring');
+
+  useEffect(() => { if (open) setEditScope('this'); }, [open, transaction]);
 
   useEffect(() => {
     if (transaction) {
@@ -104,7 +108,11 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
     };
 
     if (isEditing) {
-      await updateMutation.mutateAsync({ id: transaction!.id, data: payload });
+      await updateMutation.mutateAsync({
+        id: transaction!.id,
+        data: payload,
+        scope: isRecurringEdit ? editScope : undefined,
+      });
     } else {
       await createMutation.mutateAsync(payload as any);
     }
@@ -253,6 +261,46 @@ export const TransactionModal = ({ open, onClose, transaction }: TransactionModa
             </div>
           )}
         </div>
+
+        {/* Escopo para edição de série recorrente */}
+        {isRecurringEdit && (
+          <div className="rounded-xl border-2 border-purple-200 dark:border-purple-900/40 bg-purple-50/50 dark:bg-purple-900/10 p-4">
+            <p className="text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wide mb-2">
+              ↻ Esta é uma transação recorrente — aplicar a:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {([
+                { v: 'this',   l: 'Apenas esta parcela' },
+                { v: 'future', l: 'Esta e as próximas' },
+                { v: 'all',    l: 'Todas as parcelas' },
+              ] as const).map((opt) => (
+                <label
+                  key={opt.v}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm font-medium transition-colors ${
+                    editScope === opt.v
+                      ? 'border-purple-500 bg-white dark:bg-gray-800 text-purple-700 dark:text-purple-300'
+                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="editScope"
+                    value={opt.v}
+                    checked={editScope === opt.v}
+                    onChange={() => setEditScope(opt.v)}
+                    className="accent-purple-500"
+                  />
+                  {opt.l}
+                </label>
+              ))}
+            </div>
+            {editScope !== 'this' && (
+              <p className="text-[11px] text-purple-700/80 dark:text-purple-300/80 mt-2">
+                Em lote, só descrição, valor, categoria, status e observações são propagados. Data, tipo e parcelas só se aplicam a "apenas esta".
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="secondary" type="button" onClick={onClose}>Cancelar</Button>

@@ -52,10 +52,14 @@ export const useCreateTransaction = () => {
 export const useUpdateTransaction = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => transactionService.update(id, data),
-    onSuccess: () => {
+    mutationFn: ({ id, data, scope }: { id: string; data: any; scope?: 'this' | 'future' | 'all' }) =>
+      transactionService.update(id, data, scope),
+    onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: TRANSACTION_KEYS.all });
-      toast.success('Transação atualizada!');
+      const msg = vars.scope === 'future' ? 'Esta e as próximas parcelas atualizadas!'
+        : vars.scope === 'all' ? 'Todas as parcelas atualizadas!'
+        : 'Transação atualizada!';
+      toast.success(msg);
     },
     onError: (e: any) => toast.error(e.response?.data?.error?.message ?? 'Erro ao atualizar'),
   });
@@ -64,10 +68,14 @@ export const useUpdateTransaction = () => {
 export const useDeleteTransaction = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: transactionService.delete,
-    onSuccess: () => {
+    mutationFn: ({ id, scope }: { id: string; scope?: 'this' | 'future' | 'all' }) =>
+      transactionService.delete(id, scope),
+    onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: TRANSACTION_KEYS.all });
-      toast.success('Transação removida!');
+      const msg = vars.scope === 'future' ? 'Esta e as próximas parcelas removidas!'
+        : vars.scope === 'all' ? 'Todas as parcelas removidas!'
+        : 'Transação removida!';
+      toast.success(msg);
     },
     onError: () => toast.error('Erro ao remover transação'),
   });

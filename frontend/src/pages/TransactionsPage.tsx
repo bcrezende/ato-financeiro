@@ -10,7 +10,8 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageLoader } from '@/components/ui/Spinner';
 import { TransactionModal } from '@/components/modals/TransactionModal';
 import { RecurringDeleteDialog } from '@/components/modals/RecurringDeleteDialog';
-import { useTransactions, useDeleteTransaction, useExportTransactions, useUpdateTransaction } from '@/hooks/useTransactions';
+import { GenerateNextDialog } from '@/components/modals/GenerateNextDialog';
+import { useTransactions, useDeleteTransaction, useExportTransactions, useUpdateTransaction, useGenerateNextTransaction } from '@/hooks/useTransactions';
 import { CategoryAvatar } from '@/utils/icons';
 import { useCategories } from '@/hooks/useCategories';
 import { Transaction, TransactionFilters } from '@/types';
@@ -21,6 +22,7 @@ export const TransactionsPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [deletingTx, setDeletingTx] = useState<Transaction | null>(null);
+  const [generateNextFor, setGenerateNextFor] = useState<Transaction | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
   const { data, isLoading } = useTransactions(filters);
@@ -28,6 +30,16 @@ export const TransactionsPage = () => {
   const deleteMutation = useDeleteTransaction();
   const exportMutation = useExportTransactions();
   const updateMutation = useUpdateTransaction();
+  const generateNextMutation = useGenerateNextTransaction();
+
+  // Toggle de status: ao marcar como pago uma recorrência, oferece gerar a próxima
+  const handleToggleStatus = (t: Transaction) => {
+    const goingToPaid = t.status === 'PENDING';
+    updateMutation.mutate(
+      { id: t.id, data: { status: goingToPaid ? 'PAID' : 'PENDING' } },
+      { onSuccess: () => { if (goingToPaid && t.isRecurring && t.frequency) setGenerateNextFor(t); } },
+    );
+  };
 
   const setFilter = (key: keyof TransactionFilters, value: any) =>
     setFilters((f) => ({ ...f, [key]: value, page: 1 }));
@@ -163,7 +175,7 @@ export const TransactionsPage = () => {
                       {t.type === 'INCOME' ? '+' : '-'}{formatCurrency(t.amount)}
                     </p>
                     <button
-                      onClick={() => updateMutation.mutate({ id: t.id, data: { status: t.status === 'PAID' ? 'PENDING' : 'PAID' } })}
+                      onClick={() => handleToggleStatus(t)}
                       className={`p-1.5 ${t.status === 'PAID' ? 'text-green-500' : 'text-gray-300 hover:text-green-400'}`}
                       title={t.status === 'PAID' ? 'Marcar como pendente' : 'Marcar como pago'}
                     >
@@ -221,7 +233,7 @@ export const TransactionsPage = () => {
                       <td className="px-5 py-3.5"><TransactionBadge type={t.type} /></td>
                       <td className="px-5 py-3.5">
                         <button
-                          onClick={() => updateMutation.mutate({ id: t.id, data: { status: t.status === 'PAID' ? 'PENDING' : 'PAID' } })}
+                          onClick={() => handleToggleStatus(t)}
                           className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full transition-colors ${
                             t.status === 'PAID'
                               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 hover:bg-emerald-200'
@@ -314,6 +326,18 @@ export const TransactionsPage = () => {
         description={deletingTx?.description ?? ''}
         installmentNumber={deletingTx?.installmentNumber ?? undefined}
         installments={deletingTx?.installments ?? undefined}
+      />
+
+      {/* Após marcar uma recorrência como paga, oferece gerar a próxima */}
+      <GenerateNextDialog
+        open={!!generateNextFor}
+        transaction={generateNextFor}
+        onClose={() => setGenerateNextFor(null)}
+        loading={generateNextMutation.isPending}
+        onConfirm={async () => {
+          await generateNextMutation.mutateAsync(generateNextFor!.id);
+          setGenerateNextFor(null);
+        }}
       />
     </div>
   );

@@ -9,6 +9,8 @@ import { BudgetsPage } from '@/pages/BudgetsPage';
 import { CategoriesPage } from '@/pages/CategoriesPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { DreamBoardPage } from '@/pages/DreamBoardPage';
+import { GoalsPage } from '@/pages/GoalsPage';
+import { GoalDetailPage } from '@/pages/GoalDetailPage';
 import { SubscriptionPage } from '@/pages/SubscriptionPage';
 import { SubscriptionSuccessPage } from '@/pages/SubscriptionSuccessPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
@@ -56,6 +58,8 @@ export default function App() {
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/dream-board" element={<DreamBoardPage />} />
+        <Route path="/metas" element={<GoalsPage />} />
+        <Route path="/metas/:id" element={<GoalDetailPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -1,6 +1,6 @@
 import { NavLink, Link } from 'react-router-dom';
 import {
-  LayoutDashboard, ArrowLeftRight, PieChart, Target,
+  LayoutDashboard, ArrowLeftRight, PieChart, Target, Trophy,
   Tag, Settings, X, Sparkles, Crown, Zap, CheckCircle2, ArrowRight,
 } from 'lucide-react';
 import { useSubscriptionStatus } from '@/hooks/useSubscription';
@@ -16,6 +16,7 @@ const nav = [
   { to: '/transactions', icon: ArrowLeftRight, label: 'Transações' },
   { to: '/reports', icon: PieChart, label: 'Relatórios' },
   { to: '/budgets', icon: Target, label: 'Orçamentos' },
+  { to: '/metas', icon: Trophy, label: 'Metas' },
   { to: '/categories', icon: Tag, label: 'Categorias' },
   { to: '/dream-board', icon: Sparkles, label: 'Quadro dos Sonhos' },
   { to: '/settings', icon: Settings, label: 'Configurações' },

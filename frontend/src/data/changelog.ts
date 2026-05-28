@@ -13,6 +13,50 @@ export interface ChangelogEntry {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.3.0',
+    date: '2026-05-28',
+    title: 'Metas, relatórios sob medida e mais',
+    highlights: [
+      {
+        emoji: '🏆',
+        title: 'Metas — financeiras e não financeiras',
+        description: 'Cadastre objetivos (juntar R$50k, perder 5kg, fazer uma viagem). Adicione etapas, faça aportes, acompanhe progresso. Celebra junto quando você atinge 100%.',
+      },
+      {
+        emoji: '📊',
+        title: 'Gerador de Relatórios',
+        description: 'Filtra por data, categoria, tipo, valor e descrição. Gera PDF ou Excel — sintético (totais por categoria) ou analítico (cada transação dentro de cada categoria, com subtotais).',
+      },
+      {
+        emoji: '📅',
+        title: 'Período personalizado em Relatórios',
+        description: 'Além dos chips rápidos (3m/6m/12m/24m), agora dá pra escolher qualquer faixa de meses, mantendo gráficos e ranking sincronizados.',
+      },
+      {
+        emoji: '↻',
+        title: 'Recorrência sob demanda + frequência obrigatória',
+        description: 'Marcou uma recorrente como paga? O Ato pergunta se quer gerar a próxima. E marcar "É recorrente" agora exige escolher a frequência (não dá mais pra esquecer).',
+      },
+    ],
+  },
+  {
+    version: '1.2.0',
+    date: '2026-05-28',
+    title: 'Recorrências sob demanda',
+    highlights: [
+      {
+        emoji: '↻',
+        title: 'Próxima parcela na hora certa',
+        description: 'Marcou uma transação recorrente como paga? O Ato agora pergunta se você quer já gerar a próxima ocorrência — sem cron rodando, sem horizonte fixo. Você decide quando.',
+      },
+      {
+        emoji: '📅',
+        title: 'Recorrente sem parcelas agora faz sentido',
+        description: 'Antes, marcar "recorrente" sem informar quantidade não gerava nada para o futuro. Agora a próxima é criada conforme você confirma cada pagamento.',
+      },
+    ],
+  },
+  {
     version: '1.1.0',
     date: '2026-05-28',
     title: 'Mais controle sobre suas recorrências',

@@ -2,6 +2,7 @@ import { Response, NextFunction } from 'express';
 import { body, query } from 'express-validator';
 import { transactionService } from '../services/transaction.service';
 import { exportService } from '../services/export.service';
+import { reportService } from '../services/report.service';
 import { AuthRequest } from '../types';
 import { validate } from '../middlewares/validate.middleware';
 
@@ -69,6 +70,13 @@ export const transactionController = {
     } catch (e) { next(e); }
   },
 
+  generateNext: async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const result = await transactionService.generateNext(req.userId!, req.params.id);
+      res.status(result.alreadyExisted ? 200 : 201).json({ success: true, data: result });
+    } catch (e) { next(e); }
+  },
+
   delete: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const scope = req.query.scope as 'this' | 'future' | 'all' | undefined;
@@ -107,8 +115,14 @@ export const transactionController = {
 
   getMonthlyEvolution: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const months = Math.min(parseInt(req.query.months as string) || 12, 24);
-      const data = await transactionService.getMonthlyEvolution(req.userId!, months);
+      const q = req.query;
+      const data = await transactionService.getMonthlyEvolution(req.userId!, {
+        months: q.months ? Math.min(parseInt(q.months as string) || 12, 36) : undefined,
+        fromMonth: q.fromMonth ? parseInt(q.fromMonth as string) : undefined,
+        fromYear:  q.fromYear  ? parseInt(q.fromYear  as string) : undefined,
+        toMonth:   q.toMonth   ? parseInt(q.toMonth   as string) : undefined,
+        toYear:    q.toYear    ? parseInt(q.toYear    as string) : undefined,
+      });
       res.json({ success: true, data });
     } catch (e) { next(e); }
   },
@@ -119,6 +133,24 @@ export const transactionController = {
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.setHeader('Content-Disposition', `attachment; filename="transacoes-${Date.now()}.xlsx"`);
       await workbook.xlsx.write(res);
+    } catch (e) { next(e); }
+  },
+
+  generateReport: async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { filters = {}, reportType, format } = req.body;
+      if (!['category-sintetico', 'category-analitico'].includes(reportType)) {
+        res.status(400).json({ success: false, error: { message: 'reportType inválido' } });
+        return;
+      }
+      if (!['pdf', 'excel'].includes(format)) {
+        res.status(400).json({ success: false, error: { message: 'format deve ser pdf ou excel' } });
+        return;
+      }
+      const result = await reportService.generate(req.userId!, { filters, reportType, format });
+      res.setHeader('Content-Type', result.contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+      res.send(result.buffer);
     } catch (e) { next(e); }
   },
 

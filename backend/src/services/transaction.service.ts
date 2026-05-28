@@ -157,6 +157,64 @@ export const transactionService = {
   },
 
   /**
+   * Gera a próxima ocorrência de uma transação recorrente a partir desta.
+   * É idempotente: se já existir uma "irmã" com data posterior na mesma
+   * série, devolve aquela em vez de criar outra (alreadyExisted=true).
+   * Usada no fluxo "marcou como pago → o sistema oferece gerar a próxima".
+   */
+  async generateNext(userId: string, id: string) {
+    const anchor = await this.findById(userId, id);
+    if (!anchor.isRecurring || !anchor.frequency) {
+      throw new ForbiddenError();
+    }
+
+    // Idempotência: se já existe próxima na mesma série, retorna ela.
+    if (anchor.recurringId) {
+      const existingNext = await prisma.transaction.findFirst({
+        where: { userId, recurringId: anchor.recurringId, date: { gt: anchor.date } },
+        orderBy: { date: 'asc' },
+        include: { category: { select: { id: true, name: true, color: true, icon: true } } },
+      });
+      if (existingNext) return { transaction: existingNext, alreadyExisted: true };
+    }
+
+    // Se a âncora ainda não tem recurringId, gera um e amarra retroativamente
+    let recurringId = anchor.recurringId;
+    if (!recurringId) {
+      recurringId = crypto.randomUUID();
+      await prisma.transaction.update({ where: { id: anchor.id }, data: { recurringId } });
+    }
+
+    const nextDate = advanceDate(anchor.date, anchor.frequency, 1);
+    const created = await prisma.transaction.create({
+      data: {
+        userId,
+        description: anchor.description,
+        amount: anchor.amount,
+        type: anchor.type,
+        date: nextDate,
+        categoryId: anchor.categoryId,
+        notes: anchor.notes,
+        isRecurring: true,
+        frequency: anchor.frequency,
+        recurringId,
+        status: 'PENDING',
+      },
+      include: { category: { select: { id: true, name: true, color: true, icon: true } } },
+    });
+
+    if (created.type === 'EXPENSE') {
+      const d = new Date(created.date);
+      await prisma.budget.updateMany({
+        where: { userId, categoryId: created.categoryId, month: d.getUTCMonth() + 1, year: d.getUTCFullYear() },
+        data: { spent: { increment: created.amount } },
+      });
+    }
+
+    return { transaction: created, alreadyExisted: false };
+  },
+
+  /**
    * Recomputa `budget.spent` para um mês/categoria do zero, baseado nas
    * despesas existentes. Usado após operações em lote, onde calcular o delta
    * incremental seria frágil.
@@ -315,15 +373,47 @@ export const transactionService = {
     }));
   },
 
-  async getMonthlyEvolution(userId: string, months = 12) {
+  async getMonthlyEvolution(userId: string, opts: {
+    months?: number;
+    fromMonth?: number; fromYear?: number;
+    toMonth?: number; toYear?: number;
+  } = {}) {
+    // Resolve [from, to] inclusive
+    let from: { m: number; y: number };
+    let to: { m: number; y: number };
+
+    if (opts.fromMonth && opts.fromYear && opts.toMonth && opts.toYear) {
+      from = { m: opts.fromMonth, y: opts.fromYear };
+      to = { m: opts.toMonth, y: opts.toYear };
+    } else {
+      const months = opts.months ?? 12;
+      const now = new Date();
+      to = { m: now.getUTCMonth() + 1, y: now.getUTCFullYear() };
+      const start = new Date(Date.UTC(to.y, to.m - 1 - (months - 1), 1));
+      from = { m: start.getUTCMonth() + 1, y: start.getUTCFullYear() };
+    }
+
+    // Garante from <= to (swap)
+    if (from.y > to.y || (from.y === to.y && from.m > to.m)) {
+      [from, to] = [to, from];
+    }
+
+    // Limite de segurança: máx 36 meses
+    const monthsDiff = (to.y - from.y) * 12 + (to.m - from.m) + 1;
+    if (monthsDiff > 36) {
+      const start = new Date(Date.UTC(to.y, to.m - 1 - 35, 1));
+      from = { m: start.getUTCMonth() + 1, y: start.getUTCFullYear() };
+    }
+
     const results = [];
-    for (let i = months - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
-      const m = d.getMonth() + 1;
-      const y = d.getFullYear();
+    let cur = new Date(Date.UTC(from.y, from.m - 1, 1));
+    const end = new Date(Date.UTC(to.y, to.m - 1, 1));
+    while (cur <= end) {
+      const m = cur.getUTCMonth() + 1;
+      const y = cur.getUTCFullYear();
       const summary = await this.getSummary(userId, m, y);
       results.push({ month: m, year: y, label: `${m}/${y}`, ...summary });
+      cur = new Date(Date.UTC(y, m, 1)); // próximo mês
     }
     return results;
   },

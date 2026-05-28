@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { TrendingUp, TrendingDown, Sparkles, FileSpreadsheet, FileText } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { TrendingUp, TrendingDown, Sparkles, FileSpreadsheet, FileText, CalendarRange, BarChart3, FileSearch } from 'lucide-react';
+import { ReportBuilder } from '@/components/reports/ReportBuilder';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
@@ -40,54 +41,188 @@ const StatCard = ({ label, value, icon: Icon, intent, subtitle }: StatCardProps)
   );
 };
 
+const PRESETS = [3, 6, 12, 24] as const;
+const MONTH_NAMES = Array.from({ length: 12 }, (_, i) =>
+  new Date(2000, i).toLocaleString('pt-BR', { month: 'long' }),
+);
+
 export const ReportsPage = () => {
-  const [months, setMonths] = useState(12);
+  const now = new Date();
+  const [activeView, setActiveView] = useState<'overview' | 'builder'>('overview');
+  const [preset, setPreset] = useState<number | null>(12); // null = modo personalizado
+  const [from, setFrom] = useState({ month: now.getMonth() + 1, year: now.getFullYear() }); // será sobrescrito quando entrar em custom
+  const [to, setTo] = useState({ month: now.getMonth() + 1, year: now.getFullYear() });
   const [exportFilters, setExportFilters] = useState({ startDate: '', endDate: '' });
   const [activeTab, setActiveTab] = useState<'EXPENSE' | 'INCOME'>('EXPENSE');
 
-  const { data: evolution, isLoading } = useMonthlyEvolution(months);
-  const { data: byCategory } = useTransactionsByCategory(
-    exportFilters.startDate || undefined,
-    exportFilters.endDate || undefined,
-  );
+  // Quando entra no modo custom, inicializa from/to coerentes com o preset atual
+  const switchToCustom = () => {
+    const ref = preset ?? 12;
+    const start = new Date(now.getFullYear(), now.getMonth() - (ref - 1), 1);
+    setFrom({ month: start.getMonth() + 1, year: start.getFullYear() });
+    setTo({ month: now.getMonth() + 1, year: now.getFullYear() });
+    setPreset(null);
+  };
+
+  const evolutionOpts = preset
+    ? { months: preset }
+    : { fromMonth: from.month, fromYear: from.year, toMonth: to.month, toYear: to.year };
+
+  const { data: evolution, isLoading } = useMonthlyEvolution(evolutionOpts);
+
+  // Para o breakdown por categoria, derivamos start/end do range em vigor (1º dia do from → último dia do to)
+  const categoryRange = useMemo(() => {
+    if (preset) {
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const start = new Date(now.getFullYear(), now.getMonth() - (preset - 1), 1);
+      return {
+        startDate: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-01`,
+        endDate: `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`,
+      };
+    }
+    const lastDay = new Date(to.year, to.month, 0).getDate();
+    return {
+      startDate: `${from.year}-${String(from.month).padStart(2, '0')}-01`,
+      endDate: `${to.year}-${String(to.month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preset, from.month, from.year, to.month, to.year]);
+
+  const { data: byCategory } = useTransactionsByCategory(categoryRange.startDate, categoryRange.endDate);
   const exportMutation = useExportTransactions();
 
   const totalIncome = evolution?.reduce((s, m) => s + m.income, 0) ?? 0;
   const totalExpense = evolution?.reduce((s, m) => s + m.expense, 0) ?? 0;
   const avgBalance = evolution?.length ? (totalIncome - totalExpense) / evolution.length : 0;
 
-  if (isLoading) return <PageLoader />;
+  const rangeLabel = preset
+    ? `Últimos ${preset} meses`
+    : `${MONTH_NAMES[from.month - 1].slice(0, 3)}/${String(from.year).slice(2)} → ${MONTH_NAMES[to.month - 1].slice(0, 3)}/${String(to.year).slice(2)}`;
 
   return (
     <div className="space-y-6 animate-fade-in pb-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">Relatórios</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Análise detalhada das suas finanças</p>
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">Relatórios</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Análise detalhada das suas finanças</p>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800/60 rounded-xl p-1 w-fit shadow-inner">
+        {([
+          { v: 'overview', l: 'Visão geral', icon: BarChart3 },
+          { v: 'builder',  l: 'Gerador de relatórios', icon: FileSearch },
+        ] as const).map((t) => {
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.v}
+              onClick={() => setActiveView(t.v)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                activeView === t.v
+                  ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              }`}
+            >
+              <Icon className="w-4 h-4" /> {t.l}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Gerador */}
+      {activeView === 'builder' && <ReportBuilder />}
+
+      {/* Visão geral */}
+      {activeView === 'overview' && isLoading && <PageLoader />}
+      {activeView === 'overview' && !isLoading && (<>
+
+      {/* Seletor de período */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <CalendarRange className="w-4 h-4 text-primary-500" />
+          <p className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+            Período: <span className="text-primary-600 dark:text-primary-400 capitalize">{rangeLabel}</span>
+          </p>
         </div>
-        <Select
-          options={[
-            { value: 3, label: 'Últimos 3 meses' },
-            { value: 6, label: 'Últimos 6 meses' },
-            { value: 12, label: 'Últimos 12 meses' },
-            { value: 24, label: 'Últimos 24 meses' },
-          ]}
-          value={months}
-          onChange={(e) => setMonths(Number(e.target.value))}
-          className="w-full sm:w-56"
-        />
+
+        {/* Presets */}
+        <div className="flex flex-wrap items-center gap-2">
+          {PRESETS.map((m) => (
+            <button
+              key={m}
+              onClick={() => setPreset(m)}
+              className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${
+                preset === m
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              {m}m
+            </button>
+          ))}
+          <button
+            onClick={() => preset !== null ? switchToCustom() : null}
+            className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${
+              preset === null
+                ? 'bg-primary-600 text-white shadow-sm'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            <CalendarRange className="w-3 h-3" /> Personalizado
+          </button>
+        </div>
+
+        {/* Range custom */}
+        {preset === null && (
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide block mb-1">Mês inicial</label>
+              <Select
+                options={MONTH_NAMES.map((label, i) => ({ value: i + 1, label }))}
+                value={from.month}
+                onChange={(e) => setFrom((f) => ({ ...f, month: Number(e.target.value) }))}
+                className="capitalize"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide block mb-1">Ano inicial</label>
+              <Select
+                options={Array.from({ length: 6 }, (_, i) => ({ value: now.getFullYear() - 3 + i, label: String(now.getFullYear() - 3 + i) }))}
+                value={from.year}
+                onChange={(e) => setFrom((f) => ({ ...f, year: Number(e.target.value) }))}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide block mb-1">Mês final</label>
+              <Select
+                options={MONTH_NAMES.map((label, i) => ({ value: i + 1, label }))}
+                value={to.month}
+                onChange={(e) => setTo((t) => ({ ...t, month: Number(e.target.value) }))}
+                className="capitalize"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide block mb-1">Ano final</label>
+              <Select
+                options={Array.from({ length: 6 }, (_, i) => ({ value: now.getFullYear() - 3 + i, label: String(now.getFullYear() - 3 + i) }))}
+                value={to.year}
+                onChange={(e) => setTo((t) => ({ ...t, year: Number(e.target.value) }))}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Summary stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard label={`Receitas (${months}m)`} value={totalIncome} icon={TrendingUp} intent="income" />
-        <StatCard label={`Despesas (${months}m)`} value={totalExpense} icon={TrendingDown} intent="expense" />
+        <StatCard label="Receitas" value={totalIncome} icon={TrendingUp} intent="income" subtitle={rangeLabel} />
+        <StatCard label="Despesas" value={totalExpense} icon={TrendingDown} intent="expense" subtitle={rangeLabel} />
         <StatCard label="Saldo médio mensal" value={avgBalance} icon={Sparkles} intent="balance" />
       </div>
 
       {/* Evolution area chart */}
-      <Card title="Evolução de receitas vs despesas" subtitle={`Últimos ${months} meses`}>
+      <Card title="Evolução de receitas vs despesas" subtitle={rangeLabel}>
         {evolution && <EvolutionChart data={evolution} />}
       </Card>
 
@@ -205,6 +340,7 @@ export const ReportsPage = () => {
           </div>
         </div>
       </Card>
+      </>)}
     </div>
   );
 };

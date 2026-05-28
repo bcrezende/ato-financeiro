@@ -6,10 +6,23 @@ import { authenticate } from '../middlewares/auth.middleware';
 const router = Router();
 
 // Strict limiter for sensitive auth endpoints — mitigates brute-force and
-// password-reset-email abuse (well below the global 100/15min limit).
+// password-reset-email abuse.
+// Note: /refresh is intentionally NOT here — it's gated by the refresh token
+// itself (credential) and gets called automatically on token expiry; throttling
+// it causes legitimate users behind shared NATs (mobile carriers, corp networks)
+// to be locked out.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
-  max: 10,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: { message: 'Muitas tentativas. Tente novamente em alguns minutos.', code: 'RATE_LIMIT' } },
+});
+
+// Lighter limiter for /refresh — only catches truly abusive loops, not normal usage.
+const refreshLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 min
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: { message: 'Muitas tentativas. Tente novamente em alguns minutos.', code: 'RATE_LIMIT' } },
@@ -17,7 +30,7 @@ const authLimiter = rateLimit({
 
 router.post('/register', authLimiter, authValidators.register, authController.register);
 router.post('/login', authLimiter, authValidators.login, authController.login);
-router.post('/refresh', authLimiter, authValidators.refresh, authController.refresh);
+router.post('/refresh', refreshLimiter, authValidators.refresh, authController.refresh);
 router.post('/logout', authController.logout);
 router.post('/forgot-password', authLimiter, authValidators.forgotPassword, authController.forgotPassword);
 router.post('/reset-password', authLimiter, authValidators.resetPassword, authController.resetPassword);

@@ -23,7 +23,7 @@ export const AdminUserDetailPage = () => {
   const setStatus = (status: string) => {
     updateSub.mutate({ id: user.id, data: { subscriptionStatus: status } }, {
       onSuccess: () => toast.success(`Status alterado para ${status}`),
-      onError: () => toast.error('Erro ao alterar'),
+      onError: (e: any) => toast.error(e.response?.data?.error?.message ?? `Erro ao alterar (HTTP ${e.response?.status ?? '?'})`),
     });
   };
 
@@ -31,14 +31,14 @@ export const AdminUserDetailPage = () => {
     const ends = new Date(Date.now() + days * 86400000).toISOString();
     updateSub.mutate({ id: user.id, data: { subscriptionStatus: 'TRIAL', trialEndsAt: ends } }, {
       onSuccess: () => toast.success(`Trial estendido por ${days} dias`),
-      onError: () => toast.error('Erro ao estender'),
+      onError: (e: any) => toast.error(e.response?.data?.error?.message ?? `Erro ao estender (HTTP ${e.response?.status ?? '?'})`),
     });
   };
 
   const handleBlock = () => {
     toggleBlock.mutate({ id: user.id, blocked: !user.isBlocked }, {
       onSuccess: () => toast.success(user.isBlocked ? 'Usuário desbloqueado' : 'Usuário bloqueado'),
-      onError: () => toast.error('Erro'),
+      onError: (e: any) => toast.error(e.response?.data?.error?.message ?? `Erro (HTTP ${e.response?.status ?? '?'})`),
     });
   };
 
@@ -46,7 +46,7 @@ export const AdminUserDetailPage = () => {
     if (confirmDelete !== user.email) { toast.error('Digite o email exato para confirmar'); return; }
     deleteUser.mutate(user.id, {
       onSuccess: () => { toast.success('Usuário excluído'); navigate('/admin/users'); },
-      onError: () => toast.error('Erro ao excluir'),
+      onError: (e: any) => toast.error(e.response?.data?.error?.message ?? `Erro ao excluir (HTTP ${e.response?.status ?? '?'})`),
     });
   };
 

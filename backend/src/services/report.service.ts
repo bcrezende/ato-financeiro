@@ -3,6 +3,30 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { transactionService } from './transaction.service';
 import { TransactionFilters } from '../types';
+import { ValidationError } from '../utils/errors';
+
+// Limite máximo de range para relatório/export — evita que uma única requisição
+// pesada (range de anos sobre milhares de transações) sature o pool de conexões
+// e bloqueie o event loop.
+const MAX_REPORT_RANGE_DAYS = 365;
+const MAX_REPORT_ROWS = 5000;
+
+function assertRangeWithinLimit(filters: { startDate?: string; endDate?: string }) {
+  if (!filters.startDate || !filters.endDate) {
+    throw new ValidationError('Informe o período (data inicial e final) do relatório.');
+  }
+  const start = new Date(filters.startDate).getTime();
+  const end = new Date(filters.endDate).getTime();
+  if (Number.isNaN(start) || Number.isNaN(end)) {
+    throw new ValidationError('Datas inválidas.');
+  }
+  const days = Math.ceil((end - start) / 86400000);
+  if (days > MAX_REPORT_RANGE_DAYS) {
+    throw new ValidationError(
+      `Período máximo do relatório: ${MAX_REPORT_RANGE_DAYS} dias. Gere relatórios menores para períodos longos.`,
+    );
+  }
+}
 
 export type ReportType = 'category-sintetico' | 'category-analitico';
 export type ReportFormat = 'pdf' | 'excel';
@@ -236,7 +260,8 @@ function generatePdf(transactions: any[], reportType: ReportType, filters: Trans
 // ─────────────────────────────────────────────────────────────
 export const reportService = {
   async generate(userId: string, input: ReportInput) {
-    const { data: transactions } = await transactionService.findAll(userId, input.filters, 1, 10000);
+    assertRangeWithinLimit(input.filters);
+    const { data: transactions } = await transactionService.findAll(userId, input.filters, 1, MAX_REPORT_ROWS);
 
     const stamp = new Date().toISOString().slice(0, 10);
     const typeName = input.reportType === 'category-sintetico' ? 'sintetico' : 'analitico';

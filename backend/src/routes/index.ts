@@ -9,6 +9,7 @@ import dreamRoutes from './dream.routes';
 import adminRoutes from './admin.routes';
 import integrationRoutes from './integration.routes';
 import goalRoutes from './goal.routes';
+import suggestionRoutes from './suggestion.routes';
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use('/webhooks', webhookRoutes);
 router.use('/admin', adminRoutes);
 router.use('/integrations', integrationRoutes);
 router.use('/goals', goalRoutes);
+router.use('/suggestions', suggestionRoutes);
 
 export default router;

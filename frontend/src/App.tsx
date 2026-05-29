@@ -24,6 +24,7 @@ import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
 import { AdminUserDetailPage } from '@/pages/admin/AdminUserDetailPage';
 import { AdminsPage } from '@/pages/admin/AdminsPage';
 import { AuditLogPage } from '@/pages/admin/AuditLogPage';
+import { AdminSuggestionsPage } from '@/pages/admin/AdminSuggestionsPage';
 
 const HomeRoute = () => {
   const { isAuthenticated } = useAuthStore();
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="/admin/users" element={<AdminUsersPage />} />
         <Route path="/admin/users/:id" element={<AdminUserDetailPage />} />
         <Route path="/admin/admins" element={<AdminsPage />} />
+        <Route path="/admin/suggestions" element={<AdminSuggestionsPage />} />
         <Route path="/admin/audit" element={<AuditLogPage />} />
       </Route>
       <Route element={<AppLayout />}>

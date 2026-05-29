@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import {
   LayoutDashboard, ArrowLeftRight, PieChart, Target, Trophy,
-  Tag, Settings, X, Sparkles, Crown, Zap, CheckCircle2, ArrowRight,
+  Tag, Settings, X, Sparkles, Crown, Zap, CheckCircle2, ArrowRight, Lightbulb,
 } from 'lucide-react';
 import { useSubscriptionStatus } from '@/hooks/useSubscription';
 import { InstallPWA } from '@/components/pwa/InstallPWA';
+import { SuggestionModal } from '@/components/modals/SuggestionModal';
 
 interface SidebarProps {
   open: boolean;
@@ -74,7 +76,10 @@ const SubscriptionCTA = () => {
   );
 };
 
-export const Sidebar = ({ open, onClose }: SidebarProps) => (
+export const Sidebar = ({ open, onClose }: SidebarProps) => {
+  const [suggestionOpen, setSuggestionOpen] = useState(false);
+
+  return (
   <>
     {/* Mobile overlay */}
     {open && (
@@ -125,8 +130,19 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => (
         ))}
       </nav>
 
-      {/* Footer: install + subscription */}
+      {/* Footer: suggest + install + subscription */}
       <div className="border-t border-gray-200/60 dark:border-gray-800/60 pt-3" data-tour="subscription-cta">
+        <div className="px-3 pb-2">
+          <button
+            type="button"
+            onClick={() => setSuggestionOpen(true)}
+            className="w-full group flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-primary-700 dark:text-primary-300 bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-900/30 dark:to-indigo-900/30 hover:from-primary-100 hover:to-indigo-100 dark:hover:from-primary-900/50 dark:hover:to-indigo-900/50 transition-all"
+          >
+            <Lightbulb className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <span className="flex-1 text-left">Mande uma sugestão</span>
+            <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+        </div>
         <InstallPWA />
         <SubscriptionCTA />
         <div className="px-6 pb-3">
@@ -134,5 +150,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => (
         </div>
       </div>
     </aside>
+    <SuggestionModal open={suggestionOpen} onClose={() => setSuggestionOpen(false)} />
   </>
-);
+  );
+};

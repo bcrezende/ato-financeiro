@@ -199,6 +199,59 @@ export const adminService = {
     return admin;
   },
 
+  async listSuggestions(params: { status?: string; category?: string; page?: number; limit?: number }) {
+    const page = params.page ?? 1;
+    const limit = Math.min(params.limit ?? 20, 100);
+    const where: any = {};
+    if (params.status) where.status = params.status;
+    if (params.category) where.category = params.category;
+
+    const [total, byStatus, suggestions] = await Promise.all([
+      prisma.suggestion.count({ where }),
+      prisma.suggestion.groupBy({ by: ['status'], _count: { _all: true } }),
+      prisma.suggestion.findMany({
+        where,
+        include: { user: { select: { id: true, name: true, email: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
+
+    const counts: Record<string, number> = { PENDING: 0, REVIEWED: 0, IMPLEMENTED: 0, DECLINED: 0 };
+    for (const row of byStatus) counts[row.status] = row._count._all;
+
+    return {
+      data: suggestions,
+      counts,
+      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
+  },
+
+  async updateSuggestion(adminId: string, id: string, data: { status?: string; adminNote?: string | null }) {
+    const suggestion = await prisma.suggestion.findUnique({ where: { id } });
+    if (!suggestion) throw new NotFoundError('Suggestion');
+
+    const update: any = {};
+    if (data.status) update.status = data.status;
+    if (data.adminNote !== undefined) update.adminNote = data.adminNote;
+
+    const updated = await prisma.suggestion.update({
+      where: { id },
+      data: update,
+      include: { user: { select: { id: true, name: true, email: true } } },
+    });
+    await this.logAction(adminId, 'SUGGESTION_UPDATE', 'SUGGESTION', id, update);
+    return updated;
+  },
+
+  async deleteSuggestion(adminId: string, id: string) {
+    const suggestion = await prisma.suggestion.findUnique({ where: { id }, select: { id: true } });
+    if (!suggestion) throw new NotFoundError('Suggestion');
+    await prisma.suggestion.delete({ where: { id } });
+    await this.logAction(adminId, 'SUGGESTION_DELETE', 'SUGGESTION', id, null);
+  },
+
   async listAudit(page = 1, limit = 50) {
     const take = Math.min(limit, 100);
     const [total, logs] = await Promise.all([

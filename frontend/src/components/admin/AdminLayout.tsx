@@ -1,10 +1,11 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, ShieldCheck, ScrollText, LogOut, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, ShieldCheck, ScrollText, LogOut, Shield, Lightbulb } from 'lucide-react';
 import { useAdminStore } from '@/store/admin.store';
 
 const nav = [
   { to: '/admin', icon: LayoutDashboard, label: 'Visão geral', end: true },
   { to: '/admin/users', icon: Users, label: 'Usuários' },
+  { to: '/admin/suggestions', icon: Lightbulb, label: 'Sugestões' },
   { to: '/admin/admins', icon: ShieldCheck, label: 'Administradores' },
   { to: '/admin/audit', icon: ScrollText, label: 'Auditoria' },
 ];

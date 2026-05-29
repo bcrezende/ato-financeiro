@@ -25,6 +25,11 @@ export const adminValidators = {
     body('password').isLength({ min: 8 }).withMessage('Senha mínima de 8 caracteres'),
     validate,
   ],
+  updateSuggestion: [
+    body('status').optional().isIn(['PENDING', 'REVIEWED', 'IMPLEMENTED', 'DECLINED']),
+    body('adminNote').optional({ nullable: true }).isString().isLength({ max: 2000 }),
+    validate,
+  ],
 };
 
 export const adminController = {
@@ -98,6 +103,32 @@ export const adminController = {
     try {
       const admin = await adminService.createAdmin(req.adminId!, req.body);
       res.status(201).json({ success: true, data: admin });
+    } catch (e) { next(e); }
+  },
+
+  listSuggestions: async (req: AdminRequest, res: Response, next: NextFunction) => {
+    try {
+      const result = await adminService.listSuggestions({
+        status: req.query.status as string,
+        category: req.query.category as string,
+        page: parseInt(req.query.page as string) || 1,
+        limit: parseInt(req.query.limit as string) || 20,
+      });
+      res.json({ success: true, ...result });
+    } catch (e) { next(e); }
+  },
+
+  updateSuggestion: async (req: AdminRequest, res: Response, next: NextFunction) => {
+    try {
+      const updated = await adminService.updateSuggestion(req.adminId!, req.params.id, req.body);
+      res.json({ success: true, data: updated });
+    } catch (e) { next(e); }
+  },
+
+  deleteSuggestion: async (req: AdminRequest, res: Response, next: NextFunction) => {
+    try {
+      await adminService.deleteSuggestion(req.adminId!, req.params.id);
+      res.json({ success: true, message: 'Sugestão removida.' });
     } catch (e) { next(e); }
   },
 

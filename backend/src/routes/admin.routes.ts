@@ -32,6 +32,10 @@ router.delete('/users/:id', adminController.deleteUser);
 router.get('/admins', adminController.listAdmins);
 router.post('/admins', adminValidators.createAdmin, adminController.createAdmin);
 
+router.get('/suggestions', adminController.listSuggestions);
+router.patch('/suggestions/:id', adminValidators.updateSuggestion, adminController.updateSuggestion);
+router.delete('/suggestions/:id', adminController.deleteSuggestion);
+
 router.get('/audit', adminController.listAudit);
 
 export default router;

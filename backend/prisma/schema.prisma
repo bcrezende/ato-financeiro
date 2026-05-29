@@ -31,8 +31,30 @@ model User {
   passwordResetTokens  PasswordResetToken[]
   dreamItems           DreamItem[]
   goals                Goal[]
+  suggestions          Suggestion[]
 
   @@map("users")
+}
+
+model Suggestion {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  /// FEATURE | BUG | IMPROVEMENT | OTHER
+  category  String   @default("FEATURE")
+  title     String?
+  content   String
+  /// PENDING | REVIEWED | IMPLEMENTED | DECLINED
+  status    String   @default("PENDING")
+  adminNote String?  @map("admin_note")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("suggestions")
 }
 
 model Goal {
